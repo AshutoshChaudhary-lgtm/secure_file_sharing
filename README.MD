@@ -58,8 +58,6 @@ This project is a simple file sharing system that allows users to upload files, 
     │   ├── uploads/
     │   ├── downloads/
     │
-    ├── test                    # Automated tests (alternatively `spec` or `tests`)
-    ├── tools                   # Tools and utilities
     ├── migrations/
     ├── key.key
     ├── requirements.txt
