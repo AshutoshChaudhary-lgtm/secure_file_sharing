@@ -41,10 +41,10 @@ This project is a simple file sharing system that allows users to upload files, 
 
 6. Open your web browser and navigate to `http://<raspberry_pi_ip>:5000/`.
 
-## Directory Structure
+### Directory Structure
 secure-file-sharing/
 │
-├── app/
+├── app                     
 │   ├── __init__.py
 │   ├── models.py
 │   ├── routes.py
@@ -58,6 +58,8 @@ secure-file-sharing/
 │   ├── uploads/
 │   ├── downloads/
 │
+├── test                    # Automated tests (alternatively `spec` or `tests`)
+├── tools                   # Tools and utilities
 ├── migrations/
 ├── key.key
 ├── requirements.txt
