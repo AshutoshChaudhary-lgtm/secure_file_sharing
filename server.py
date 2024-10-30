@@ -52,18 +52,7 @@ def upload_file():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    safe_path = os.path.abspath(os.path.join(DOWNLOAD_FOLDER, filename))
-
-    if not safe_path.startswith(os.path.abspath(DOWNLOAD_FOLDER)):
-        return abort(404)
-
-    return send_from_directory(DOWNLOAD_FOLDER, filename)
-
-@app.route('/decrypt/<filename>', methods=['GET'])
-def decrypt_file(filename):
     filename = os.path.basename(filename)
-    if '..' in filename or filename.startswith('/'):
-        return abort(400)
     encrypted_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, filename))
 
     if not encrypted_path.startswith(os.path.abspath(UPLOAD_FOLDER)):
@@ -77,7 +66,7 @@ def decrypt_file(filename):
     with open(decrypted_path, 'wb') as decrypted_file:
         decrypted_file.write(decrypted_data)
 
-    return redirect(url_for('download_file', filename=filename))
+    return send_from_directory(DOWNLOAD_FOLDER, filename)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
