@@ -58,7 +58,6 @@ This project is a simple file sharing system that allows users to upload files, 
     │   ├── uploads/
     │   ├── downloads/
     │
-    ├── migrations/
     ├── key.key
     ├── requirements.txt
     ├── README.md
