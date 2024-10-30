@@ -1,4 +1,4 @@
-from flask import Flask, request, send_from_directory, safe_join, abort
+from flask import Flask, request, send_from_directory, abort
 import os
 
 app = Flask(__name__)
@@ -14,7 +14,7 @@ def upload_file():
         return 'No selected file', 400
 
     filename = os.path.basename(file.filename)
-    safe_path = safe_join(UPLOAD_FOLDER, filename)
+    safe_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, filename))
 
     if not safe_path.startswith(os.path.abspath(UPLOAD_FOLDER)):
         return 'Invalid file path', 400
@@ -24,7 +24,7 @@ def upload_file():
 
 @app.route('/download/<filename>', methods=['GET'])
 def download_file(filename):
-    safe_path = safe_join(DOWNLOAD_FOLDER, filename)
+    safe_path = os.path.abspath(os.path.join(DOWNLOAD_FOLDER, filename))
 
     if not safe_path.startswith(os.path.abspath(DOWNLOAD_FOLDER)):
         return abort(404)
