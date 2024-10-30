@@ -43,25 +43,27 @@ This project is a simple file sharing system that allows users to upload files, 
 
 ## Directory Structure
 secure-file-sharing/
+│
 ├── app/
-├── init.py
-├── models.py
-├── routes.py
-├── templates/
-│   ├── index.html
-│   ├── upload.html
-│   ├── download.html
-│   ├── login.html
-│   ├── register.html
-│   └── friends.html
-├── uploads/
-├── downloads/
+│   ├── __init__.py
+│   ├── models.py
+│   ├── routes.py
+│   ├── templates/
+│   │   ├── index.html
+│   │   ├── upload.html
+│   │   ├── download.html
+│   │   ├── login.html
+│   │   ├── register.html
+│   │   ├── friends.html
+│   ├── uploads/
+│   ├── downloads/
+│
 ├── migrations/
 ├── key.key
 ├── requirements.txt
 ├── README.md
 ├── run.py
-└── .env
+├── .env
 
 ## Notes
 
