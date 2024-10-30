@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Friends</title>
+</head>
+<body>
+    <h1>Manage Friends</h1>
+    <form action="/friends" method="post">
+        <label for="friend_username">Friend's Username:</label>
+        <input type="text" id="friend_username" name="friend_username" required><br><br>
+        <input type="submit" value="Add Friend">
+    </form>
+    <h2>Your Friends</h2>
+    <ul>
+        {% for friend in friends %}
+            <li>{{ friend.username }}</li>
+        {% endfor %}
+    </ul>
+    <a href="/">Back to Home</a>
+</body>
+</html>

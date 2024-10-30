@@ -4,8 +4,10 @@ This project is a simple file sharing system that allows users to upload files, 
 
 ## Features
 
+- User registration and login.
 - Upload files and encrypt them on the server.
 - Download files and decrypt them on the server.
+- Manage friends list.
 - Simple web interface for uploading and downloading files.
 
 ## Installation
@@ -27,15 +29,20 @@ This project is a simple file sharing system that allows users to upload files, 
     pip install -r requirements.txt
     ```
 
-4. Run the application:
+4. Create a `.env` file in the root directory and add your secret key:
+    ```
+    SECRET_KEY=your_secret_key
+    ```
+
+5. Run the application:
     ```sh
     python run.py
     ```
 
-5. Open your web browser and navigate to `http://<raspberry_pi_ip>:5000/`.
+6. Open your web browser and navigate to `http://<raspberry_pi_ip>:5000/`.
 
 ## Directory Structure
-simple-file-sharing-project/ │ ├── app/ │ ├── init.py │ ├── routes.py │ ├── templates/ │ │ ├── index.html │ │ ├── upload.html │ │ ├── download.html │ ├── uploads/ │ ├── downloads/ │ ├── key.key ├── requirements.txt ├── README.md ├── run.py
+secure-file-sharing/ │ ├── app/ │ ├── init.py │ ├── models.py │ ├── routes.py │ ├── templates/ │ │ ├── index.html │ │ ├── upload.html │ │ ├── download.html │ │ ├── login.html │ │ ├── register.html │ │ ├── friends.html │ ├── uploads/ │ ├── downloads/ │ ├── migrations/ ├── key.key ├── requirements.txt ├── README.md ├── run.py ├── .env
 
 ## Notes
 
