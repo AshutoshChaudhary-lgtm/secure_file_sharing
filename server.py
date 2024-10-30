@@ -7,11 +7,9 @@ UPLOAD_FOLDER = '/home/kali/Desktop/projects/cs/simple-file-sharing-project/uplo
 DOWNLOAD_FOLDER = '/home/kali/Desktop/projects/cs/simple-file-sharing-project/downloads'
 KEY_FILE = 'key.key'
 
-# Ensure the upload and download folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(DOWNLOAD_FOLDER, exist_ok=True)
 
-# Generate a key if it doesn't exist
 if not os.path.exists(KEY_FILE):
     key = Fernet.generate_key()
     with open(KEY_FILE, 'wb') as key_file:
@@ -50,8 +48,16 @@ def upload_file():
         return 'File uploaded and encrypted successfully'
     return render_template('upload.html')
 
-@app.route('/download/<filename>', methods=['GET'])
-def download_file(filename):
+@app.route('/download', methods=['GET'])
+def download_page():
+    return render_template('download.html')
+
+@app.route('/decrypt', methods=['GET'])
+def decrypt_file():
+    filename = request.args.get('filename')
+    if not filename:
+        return 'No filename provided', 400
+
     filename = os.path.basename(filename)
     encrypted_path = os.path.abspath(os.path.join(UPLOAD_FOLDER, filename))
 
