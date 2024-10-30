@@ -3,8 +3,8 @@ from cryptography.fernet import Fernet
 import os
 
 app = Flask(__name__)
-UPLOAD_FOLDER = '/path/to/upload'
-DOWNLOAD_FOLDER = '/path/to/download'
+UPLOAD_FOLDER = '/home/kali/Desktop/projects/cs/simple-file-sharing-project/uploads'
+DOWNLOAD_FOLDER = '/home/kali/Desktop/projects/cs/simple-file-sharing-project/downloads'
 KEY_FILE = 'key.key'
 
 # Ensure the upload and download folders exist
