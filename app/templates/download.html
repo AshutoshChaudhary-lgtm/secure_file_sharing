@@ -6,10 +6,10 @@
 </head>
 <body>
     <h1>Download File</h1>
-    <form action="/decrypt" method="get">
+    <form method="get" action="{% url 'download_file' %}">
         <label for="filename">Enter filename:</label>
         <input type="text" id="filename" name="filename" placeholder="Enter filename"><br><br>
-        <input type="submit" value="Download">
+        <button type="submit">Download</button>
     </form>
     <a href="/">Back to Home</a>
 </body>
