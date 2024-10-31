@@ -1,9 +1,7 @@
 # Simple File Sharing Project
-
 This project is a simple file sharing system that allows users to upload files, which are then encrypted, and download files, which are decrypted.
 
 ## Features
-
 - User registration and login.
 - Upload files and encrypt them on the server.
 - Download files and decrypt them on the server.
@@ -11,7 +9,6 @@ This project is a simple file sharing system that allows users to upload files, 
 - Simple web interface for uploading and downloading files.
 
 ## Installation
-
 1. Clone the repository:
     ```sh
     git clone https://github.com/yourusername/simple-file-sharing-project.git
@@ -29,17 +26,12 @@ This project is a simple file sharing system that allows users to upload files, 
     pip install -r requirements.txt
     ```
 
-4. Create a `.env` file in the root directory and add your secret key:
-    ```
-    SECRET_KEY=your_secret_key
-    ```
-
-5. Run the application:
+4. Run the application:
     ```sh
     python run.py
     ```
 
-6. Open your web browser and navigate to `http://<raspberry_pi_ip>:5000/`.
+5. Open your web browser and navigate to `http://<raspberry_pi_ip>:5000/`.
 
 ### Directory Structure
     secure-file-sharing/
@@ -63,8 +55,6 @@ This project is a simple file sharing system that allows users to upload files, 
     ├── README.md
     ├── run.py
     ├── .env
-
 ## Notes
-
 - Ensure that the `uploads` and `downloads` directories have the correct permissions.
 - The encryption key is stored in `key.key`. Keep this file secure.

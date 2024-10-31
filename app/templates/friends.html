@@ -17,6 +17,14 @@
             <li>{{ friend.username }}</li>
         {% endfor %}
     </ul>
+    <h2>Share File with Friend</h2>
+    <form action="/share" method="post">
+        <label for="filename">Filename:</label>
+        <input type="text" id="filename" name="filename" required><br><br>
+        <label for="friend_username">Friend's Username:</label>
+        <input type="text" id="friend_username" name="friend_username" required><br><br>
+        <input type="submit" value="Share File">
+    </form>
     <a href="/">Back to Home</a>
 </body>
 </html>

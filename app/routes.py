@@ -1,7 +1,7 @@
 from flask import request, send_from_directory, render_template, redirect, url_for, flash, abort
 from flask_login import login_user, current_user, logout_user, login_required
 from app import app, db, cipher_suite, UPLOAD_FOLDER, DOWNLOAD_FOLDER
-from app.models import User, File, Friend
+from app.models import User, File, Friend, FileShare
 import os
 import re
 
@@ -90,7 +90,7 @@ def upload_file():
         with open(safe_path, 'wb') as encrypted_file:
             encrypted_file.write(encrypted_data)
 
-        new_file = File(filename=filename, owner=current_user)
+        new_file = File(filename=filename, user_id=current_user.id)
         db.session.add(new_file)
         db.session.commit()
 
@@ -119,6 +119,13 @@ def decrypt_file():
     if not os.path.exists(encrypted_path):
         return 'File not found', 404
 
+    # Check if the current user is the owner of the file or if the file is shared with the current user
+    file_record = File.query.filter_by(filename=filename, user_id=current_user.id).first()
+    if not file_record:
+        file_share = FileShare.query.filter_by(file_id=file_record.id, user_id=current_user.id).first()
+        if not file_share:
+            return 'Unauthorized access', 403
+
     with open(encrypted_path, 'rb') as encrypted_file:
         encrypted_data = encrypted_file.read()
         decrypted_data = cipher_suite.decrypt(encrypted_data)
@@ -145,3 +152,26 @@ def manage_friends():
     friends = Friend.query.filter_by(user_id=current_user.id).all()
     friend_list = [User.query.get(friend.friend_id) for friend in friends]
     return render_template('friends.html', friends=friend_list)
+
+@app.route('/share', methods=['POST'])
+@login_required
+def share_file():
+    filename = request.form['filename']
+    friend_username = request.form['friend_username']
+    friend = User.query.filter_by(username=friend_username).first()
+
+    if not friend:
+        flash('Friend not found', 'danger')
+        return redirect(url_for('manage_friends'))
+
+    file_record = File.query.filter_by(filename=filename, user_id=current_user.id).first()
+    if not file_record:
+        flash('File not found or you do not have permission to share this file', 'danger')
+        return redirect(url_for('manage_friends'))
+
+    file_share = FileShare(file_id=file_record.id, user_id=friend.id)
+    db.session.add(file_share)
+    db.session.commit()
+
+    flash('File shared successfully!', 'success')
+    return redirect(url_for('manage_friends'))
