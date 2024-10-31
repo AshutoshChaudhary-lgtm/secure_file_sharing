@@ -122,9 +122,11 @@ def decrypt_file():
     # Check if the current user is the owner of the file or if the file is shared with the current user
     file_record = File.query.filter_by(filename=filename, user_id=current_user.id).first()
     if not file_record:
-        file_share = FileShare.query.filter_by(file_id=file_record.id, user_id=current_user.id).first()
-        if not file_share:
-            return 'Unauthorized access', 403
+        return 'File not found or you do not have permission to access this file', 404
+
+    file_share = FileShare.query.filter_by(file_id=file_record.id, user_id=current_user.id).first()
+    if not file_share:
+        return 'Unauthorized access', 403
 
     with open(encrypted_path, 'rb') as encrypted_file:
         encrypted_data = encrypted_file.read()
