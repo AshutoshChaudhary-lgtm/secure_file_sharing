@@ -1,8 +1,4 @@
-Flask
-Flask-SQLAlchemy
-Flask-Login
-Flask-Migrate
-Flask-Script
+Django
+djangorestframework
 cryptography
-Werkzeug
 python-dotenv
