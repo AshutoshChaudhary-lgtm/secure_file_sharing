@@ -108,34 +108,26 @@ def decrypt_file():
     filename = request.args.get('filename')
     if not filename:
         return 'No filename provided', 400
-
     filename = os.path.basename(filename)
     user_folder = os.path.join(UPLOAD_FOLDER, str(current_user.id))
     encrypted_path = os.path.abspath(os.path.join(user_folder, filename))
-
     if not encrypted_path.startswith(os.path.abspath(user_folder)):
         return abort(404)
-
     if not os.path.exists(encrypted_path):
         return 'File not found', 404
-
     # Check if the current user is the owner of the file or if the file is shared with the current user
     file_record = File.query.filter_by(filename=filename, user_id=current_user.id).first()
     if not file_record:
-        return 'File not found or you do not have permission to access this file', 404
-
+        return 'File not found or unauthorized access', 403
     file_share = FileShare.query.filter_by(file_id=file_record.id, user_id=current_user.id).first()
     if not file_share:
         return 'Unauthorized access', 403
-
     with open(encrypted_path, 'rb') as encrypted_file:
         encrypted_data = encrypted_file.read()
         decrypted_data = cipher_suite.decrypt(encrypted_data)
-
     decrypted_path = os.path.abspath(os.path.join(DOWNLOAD_FOLDER, filename))
     with open(decrypted_path, 'wb') as decrypted_file:
         decrypted_file.write(decrypted_data)
-
     return send_from_directory(DOWNLOAD_FOLDER, filename)
 
 @app.route('/friends', methods=['GET', 'POST'])
