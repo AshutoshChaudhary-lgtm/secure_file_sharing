@@ -1,3 +1,4 @@
+# app/views.py
 from django.shortcuts import render, redirect
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required
@@ -8,22 +9,12 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils.text import get_valid_filename
 from django.core.files.storage import default_storage
+from django.contrib.auth.models import User  # Added import
 from .forms import UserRegistrationForm, FileUploadForm
 from .models import File, FileShare, Friend
 from cryptography.fernet import Fernet
 import os
 from pathlib import Path
-
-def index(request):
-    """Home page view"""
-    files = None
-    if request.user.is_authenticated:
-        files = File.objects.filter(user=request.user)
-        shared_files = File.objects.filter(shared_with=request.user)
-    return render(request, 'index.html', {
-        'files': files,
-        'shared_files': shared_files if request.user.is_authenticated else None
-    })
 
 # Constants
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
@@ -69,6 +60,54 @@ def get_safe_user_file_path(user_id, filename):
         
     except (RuntimeError, OSError) as e:
         raise ValidationError(f'Invalid path: {str(e)}')
+
+def index(request):
+    """Home page view"""
+    files = None
+    shared_files = None
+    if request.user.is_authenticated:
+        files = File.objects.filter(user=request.user)
+        shared_files = File.objects.filter(shared_with=request.user)
+    return render(request, 'index.html', {
+        'files': files,
+        'shared_files': shared_files
+    })
+
+def register(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            password = form.cleaned_data['password']
+            try:
+                validate_password(password, user)
+                user.set_password(password)
+                user.save()
+                login(request, user)
+                messages.success(request, 'Your account has been created!')
+                return redirect('index')
+            except ValidationError as e:
+                form.add_error('password', e)
+    else:
+        form = UserRegistrationForm()
+    return render(request, 'register.html', {'form': form})
+
+def user_login(request):
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('index')
+        else:
+            messages.error(request, 'Invalid username or password')
+    return render(request, 'login.html')
+
+@login_required
+def user_logout(request):
+    logout(request)
+    return redirect('index')
 
 @login_required
 def upload_file(request):
@@ -121,10 +160,7 @@ def download_file(request):
             raise ValidationError('No filename provided')
             
         # Get file record
-        file = File.objects.filter(
-            filename=filename,
-            user=request.user
-        ).first()
+        file = File.objects.filter(filename=filename, user=request.user).first()
         
         if not file:
             # Check shared files
@@ -154,3 +190,46 @@ def download_file(request):
     except Exception as e:
         messages.error(request, f'Error reading file: {str(e)}')
     return redirect('index')
+
+@login_required
+def manage_friends(request):
+    if request.method == 'POST':
+        friend_username = request.POST.get('friend_username')
+        if friend_username == request.user.username:
+            messages.error(request, 'Cannot add yourself as friend')
+            return redirect('friends')
+            
+        friend = User.objects.filter(username=friend_username).first()
+        if friend:
+            Friend.objects.get_or_create(user=request.user, friend=friend)
+            messages.success(request, f'Added {friend_username} as friend')
+        else:
+            messages.error(request, 'User not found')
+    friends = Friend.objects.filter(user=request.user)
+    return render(request, 'friends.html', {'friends': friends})
+
+@login_required
+def share_file(request):
+    if request.method == 'POST':
+        filename = request.POST.get('filename')
+        friend_username = request.POST.get('friend_username')
+        
+        try:
+            file = File.objects.filter(filename=filename, user=request.user).first()
+            friend = User.objects.filter(username=friend_username).first()
+            
+            if not file or not friend:
+                messages.error(request, 'File or user not found')
+                return redirect('friends')
+                
+            if friend == request.user:
+                messages.error(request, 'Cannot share file with yourself')
+                return redirect('friends')
+                
+            FileShare.objects.get_or_create(file=file, user=friend)
+            messages.success(request, f'File shared with {friend_username}')
+            
+        except Exception as e:
+            messages.error(request, f'Error sharing file: {str(e)}')
+            
+    return redirect('friends')
