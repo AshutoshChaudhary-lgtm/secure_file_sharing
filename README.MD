@@ -1,3 +1,4 @@
+#OUTDATED
 # Simple File Sharing Project
 This project is a simple file sharing system that allows users to upload files, which are then encrypted, and download files, which are decrypted.
 
