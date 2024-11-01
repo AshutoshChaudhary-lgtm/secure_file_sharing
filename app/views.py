@@ -5,92 +5,141 @@ from django.contrib import messages
 from django.http import HttpResponse
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.utils.text import get_valid_filename
+from django.core.files.storage import default_storage
 from .forms import UserRegistrationForm, FileUploadForm
-from .models import File, FileShare
+from .models import File, FileShare, Friend
 from cryptography.fernet import Fernet
 import os
+from pathlib import Path
+
+# Constants
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
+ALLOWED_EXTENSIONS = {'.txt', '.pdf', '.doc', '.docx', '.jpg', '.png'}
 
 # Load the encryption key
-KEY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'key.key')
+KEY_FILE = Path(__file__).resolve().parent.parent / 'key.key'
 with open(KEY_FILE, 'rb') as key_file:
     key = key_file.read()
 cipher_suite = Fernet(key)
 
-def register(request):
-    if request.method == 'POST':
-        form = UserRegistrationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            password = form.cleaned_data['password']
-            try:
-                validate_password(password, user)
-                user.set_password(password)
-                user.save()
-                login(request, user)
-                messages.success(request, 'Your account has been created!')
-                return redirect('index')
-            except ValidationError as e:
-                form.add_error('password', e)
-    else:
-        form = UserRegistrationForm()
-    return render(request, 'register.html', {'form': form})
+def validate_file_extension(filename):
+    """Validate file extension"""
+    ext = Path(filename).suffix.lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise ValidationError(f'Invalid file extension. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
+    return ext
 
-def user_login(request):
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request, username=username, password=password)
-        if user is not None:
-            login(request, user)
-            return redirect('index')
-        else:
-            messages.error(request, 'Invalid username or password')
-    return render(request, 'login.html')
-
-def user_logout(request):
-    logout(request)
-    return redirect('index')
+def get_safe_user_file_path(user_id, filename):
+    """Safely construct file path within user's upload directory"""
+    try:
+        # Sanitize filename and get extension
+        safe_filename = get_valid_filename(filename)
+        ext = validate_file_extension(safe_filename)
+        
+        # Construct base upload path
+        base_path = Path(settings.MEDIA_ROOT) / 'uploads' / str(user_id)
+        base_path = base_path.resolve()
+        
+        # Generate unique filename
+        file_path = base_path / safe_filename
+        counter = 1
+        while file_path.exists():
+            name = Path(safe_filename).stem
+            file_path = base_path / f"{name}_{counter}{ext}"
+            counter += 1
+            
+        # Verify path is within uploads directory
+        if not str(file_path).startswith(str(settings.MEDIA_ROOT)):
+            raise ValidationError('Invalid file path')
+            
+        return file_path
+        
+    except (RuntimeError, OSError) as e:
+        raise ValidationError(f'Invalid path: {str(e)}')
 
 @login_required
 def upload_file(request):
     if request.method == 'POST':
         form = FileUploadForm(request.POST, request.FILES)
         if form.is_valid():
-            file = form.save(commit=False)
-            file.user = request.user
-            file_data = request.FILES['file'].read()
-            encrypted_data = cipher_suite.encrypt(file_data)
-            safe_filename = os.path.basename(file.filename)  # Sanitize the filename
-            file_path = os.path.join('uploads', str(request.user.id), safe_filename)
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            # deepcode ignore PT: ignoring this time
-            with open(file_path, 'wb') as encrypted_file:
-                encrypted_file.write(encrypted_data)
-            file.save()
-            messages.success(request, 'File uploaded and encrypted successfully')
-            return redirect('index')
+            try:
+                file = form.save(commit=False)
+                file.user = request.user
+                
+                if 'file' not in request.FILES:
+                    raise ValidationError('No file uploaded')
+                    
+                uploaded_file = request.FILES['file']
+                if uploaded_file.size > MAX_FILE_SIZE:
+                    raise ValidationError(f'File too large. Max size: {MAX_FILE_SIZE/1024/1024}MB')
+                
+                file_data = uploaded_file.read()
+                if not file_data:
+                    raise ValidationError('Empty file')
+                
+                # Get safe file path
+                file_path = get_safe_user_file_path(request.user.id, file.filename)
+                
+                # Create directory if needed
+                file_path.parent.mkdir(parents=True, exist_ok=True)
+                
+                # Save encrypted file
+                encrypted_data = cipher_suite.encrypt(file_data)
+                file_path.write_bytes(encrypted_data)
+                
+                file.save()
+                messages.success(request, 'File uploaded and encrypted successfully')
+                return redirect('index')
+                
+            except ValidationError as e:
+                messages.error(request, str(e))
+            except Exception as e:
+                messages.error(request, f'Error saving file: {str(e)}')
+                
     else:
         form = FileUploadForm()
     return render(request, 'upload.html', {'form': form})
 
 @login_required
 def download_file(request):
-    filename = request.GET.get('filename')
-    if not filename:
-        messages.error(request, 'No filename provided')
-        return redirect('index')
-    filename = os.path.basename(filename)  # Sanitize the filename
-    file = File.objects.filter(filename=filename, user=request.user).first()
-    if not file:
-        messages.error(request, 'File not found or unauthorized access')
-        return redirect('index')
-    file_path = os.path.join('uploads', str(request.user.id), filename)
-    if not os.path.exists(file_path):
-        messages.error(request, 'File not found')
-        return redirect('index')
-    with open(file_path, 'rb') as encrypted_file:
-        encrypted_data = encrypted_file.read()
+    try:
+        filename = request.GET.get('filename')
+        if not filename:
+            raise ValidationError('No filename provided')
+            
+        # Get file record
+        file = File.objects.filter(
+            filename=filename,
+            user=request.user
+        ).first()
+        
+        if not file:
+            # Check shared files
+            shared_file = FileShare.objects.filter(
+                file__filename=filename,
+                user=request.user
+            ).first()
+            if not shared_file:
+                raise ValidationError('File not found or unauthorized access')
+            file = shared_file.file
+            
+        # Get safe file path
+        file_path = get_safe_user_file_path(file.user.id, filename)
+        if not file_path.exists():
+            raise ValidationError('File not found')
+            
+        # Read and decrypt file
+        encrypted_data = file_path.read_bytes()
         decrypted_data = cipher_suite.decrypt(encrypted_data)
-    response = HttpResponse(decrypted_data, content_type='application/octet-stream')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
+        
+        response = HttpResponse(decrypted_data, content_type='application/octet-stream')
+        response['Content-Disposition'] = f'attachment; filename="{file_path.name}"'
+        return response
+        
+    except ValidationError as e:
+        messages.error(request, str(e))
+    except Exception as e:
+        messages.error(request, f'Error reading file: {str(e)}')
+    return redirect('index')
