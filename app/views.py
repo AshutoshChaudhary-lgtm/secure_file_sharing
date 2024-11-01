@@ -109,6 +109,7 @@ def user_logout(request):
     logout(request)
     return redirect('index')
 
+# app/views.py
 @login_required
 def upload_file(request):
     if request.method == 'POST':
@@ -131,6 +132,7 @@ def upload_file(request):
                 
                 # Get safe file path
                 file_path = get_safe_user_file_path(request.user.id, file.filename)
+                print(f"Saving file to: {file_path}")  # Debugging statement
                 
                 # Create directory if needed
                 file_path.parent.mkdir(parents=True, exist_ok=True)
