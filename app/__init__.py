@@ -1,1 +1,1 @@
-# This file is intentionally left blank to mark the directory as a Python package.
+default_app_config = 'app.apps.AppConfig'

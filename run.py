@@ -1,24 +1,9 @@
-from app import app, db
-from flask_script import Manager
-from flask_migrate import Migrate, MigrateCommand
+#!/usr/bin/env python
 import os
-
-# Initialize Flask-Migrate
-migrate = Migrate(app, db)
-manager = Manager(app)
-
-# Add the 'db' command to the manager
-manager.add_command('db', MigrateCommand)
-
-@manager.command
-def init_db():
-    """Initialize the database."""
-    if not os.path.exists('migrations'):
-        os.system('flask db init')
-    os.system('flask db migrate -m "Initial migration"')
-    os.system('flask db upgrade')
-    print("Database initialized and migrated!")
+import django
 
 if __name__ == '__main__':
-    init_db()
-    manager.run()
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'secure_file_sharing.settings')
+    django.setup()
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(['manage.py', 'runserver'])
