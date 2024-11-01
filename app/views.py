@@ -110,6 +110,7 @@ def user_logout(request):
     return redirect('index')
 
 # app/views.py
+# app/views.py
 @login_required
 def upload_file(request):
     if request.method == 'POST':
@@ -123,6 +124,8 @@ def upload_file(request):
                     raise ValidationError('No file uploaded')
                     
                 uploaded_file = request.FILES['file']
+                print(f"Uploaded file: {uploaded_file.name}, Size: {uploaded_file.size}")  # Debugging statement
+                
                 if uploaded_file.size > MAX_FILE_SIZE:
                     raise ValidationError(f'File too large. Max size: {MAX_FILE_SIZE/1024/1024}MB')
                 
@@ -140,6 +143,7 @@ def upload_file(request):
                 # Save encrypted file
                 encrypted_data = cipher_suite.encrypt(file_data)
                 file_path.write_bytes(encrypted_data)
+                print(f"File saved successfully to: {file_path}")  # Debugging statement
                 
                 file.save()
                 messages.success(request, 'File uploaded and encrypted successfully')
@@ -147,8 +151,10 @@ def upload_file(request):
                 
             except ValidationError as e:
                 messages.error(request, str(e))
+                print(f"ValidationError: {str(e)}")  # Debugging statement
             except Exception as e:
                 messages.error(request, f'Error saving file: {str(e)}')
+                print(f"Exception: {str(e)}")  # Debugging statement
                 
     else:
         form = FileUploadForm()
