@@ -22,6 +22,8 @@ ALLOWED_EXTENSIONS = {'.txt', '.pdf', '.doc', '.docx', '.jpg', '.png'}
 
 # Load the encryption key
 KEY_FILE = Path(__file__).resolve().parent.parent / 'key.key'
+if not KEY_FILE.exists():
+    raise FileNotFoundError(f'Encryption key not found at {KEY_FILE}')
 with open(KEY_FILE, 'rb') as key_file:
     key = key_file.read()
 cipher_suite = Fernet(key)
@@ -45,6 +47,12 @@ def get_safe_user_file_path(user_id, filename):
         base_path = Path(settings.MEDIA_ROOT) / 'uploads' / str(user_id)
         base_path = base_path.resolve()
         
+        # Ensure base_path is within MEDIA_ROOT
+        if not base_path.is_dir():
+            base_path.mkdir(parents=True, exist_ok=True)
+        if not str(base_path).startswith(str(settings.MEDIA_ROOT.resolve())):
+            raise ValidationError('Invalid base upload path')
+        
         # Generate unique filename
         file_path = base_path / safe_filename
         counter = 1
@@ -54,11 +62,11 @@ def get_safe_user_file_path(user_id, filename):
             counter += 1
             
         # Verify path is within uploads directory
-        if not str(file_path).startswith(str(settings.MEDIA_ROOT)):
+        if not str(file_path).startswith(str(settings.MEDIA_ROOT.resolve())):
             raise ValidationError('Invalid file path')
             
         return file_path
-        
+            
     except (RuntimeError, OSError) as e:
         raise ValidationError(f'Invalid path: {str(e)}')
 
@@ -95,8 +103,8 @@ def register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
+        username = request.POST.get('username')
+        password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
@@ -126,11 +134,15 @@ def upload_file(request):
                 print(f"Uploaded file: {uploaded_file.name}, Size: {uploaded_file.size}")  # Debugging statement
                 
                 if uploaded_file.size > MAX_FILE_SIZE:
-                    raise ValidationError(f'File too large. Max size: {MAX_FILE_SIZE/1024/1024}MB')
+                    raise ValidationError(f'File too large. Max size: {MAX_FILE_SIZE / (1024 * 1024)}MB')
                 
                 file_data = uploaded_file.read()
                 if not file_data:
                     raise ValidationError('Empty file')
+                
+                # Set filename from uploaded file
+                file.filename = uploaded_file.name
+                print(f"File.filename set to: {file.filename}")  # Debugging statement
                 
                 # Get safe file path
                 file_path = get_safe_user_file_path(request.user.id, file.filename)
@@ -181,6 +193,7 @@ def download_file(request):
             
         # Get safe file path
         file_path = get_safe_user_file_path(file.user.id, filename)
+        print(f"Downloading file from: {file_path}")  # Debugging statement
         if not file_path.exists():
             raise ValidationError('File not found')
             
@@ -194,14 +207,20 @@ def download_file(request):
         
     except ValidationError as e:
         messages.error(request, str(e))
+        print(f"ValidationError: {str(e)}")  # Debugging statement
     except Exception as e:
         messages.error(request, f'Error reading file: {str(e)}')
+        print(f"Exception: {str(e)}")  # Debugging statement
     return redirect('index')
 
 @login_required
 def manage_friends(request):
     if request.method == 'POST':
         friend_username = request.POST.get('friend_username')
+        if not friend_username:
+            messages.error(request, 'Please enter a username')
+            return redirect('friends')
+        
         if friend_username == request.user.username:
             messages.error(request, 'Cannot add yourself as friend')
             return redirect('friends')
@@ -221,12 +240,19 @@ def share_file(request):
         filename = request.POST.get('filename')
         friend_username = request.POST.get('friend_username')
         
+        if not filename or not friend_username:
+            messages.error(request, 'Please provide both filename and friend\'s username')
+            return redirect('friends')
+        
         try:
             file = File.objects.filter(filename=filename, user=request.user).first()
             friend = User.objects.filter(username=friend_username).first()
             
-            if not file or not friend:
-                messages.error(request, 'File or user not found')
+            if not file:
+                messages.error(request, 'File not found')
+                return redirect('friends')
+            if not friend:
+                messages.error(request, 'User not found')
                 return redirect('friends')
                 
             if friend == request.user:
@@ -238,5 +264,6 @@ def share_file(request):
             
         except Exception as e:
             messages.error(request, f'Error sharing file: {str(e)}')
+            print(f"Exception: {str(e)}")  # Debugging statement
             
     return redirect('friends')
