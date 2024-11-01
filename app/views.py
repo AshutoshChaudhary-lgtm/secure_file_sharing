@@ -69,6 +69,61 @@ def get_safe_user_file_path(user_id, filename):
     except (RuntimeError, OSError) as e:
         raise ValidationError(f'Invalid path: {str(e)}')
 
+@login_required
+def download_file(request):
+    if request.method == 'GET':
+        filename = request.GET.get('filename')
+        if not filename:
+            messages.error(request, 'No filename provided')
+            return redirect('index')
+        
+        try:
+            # Ensure filename is safe
+            safe_filename = get_valid_filename(filename)
+            ext = validate_file_extension(safe_filename)
+            
+            # Try to get the file owned by the user
+            file = File.objects.filter(filename=safe_filename, user=request.user).first()
+            
+            if not file:
+                # Try to get the file shared with the user
+                shared_file = FileShare.objects.filter(
+                    file__filename=safe_filename,
+                    user=request.user
+                ).first()
+                if shared_file:
+                    file = shared_file.file
+                else:
+                    messages.error(request, 'File not found or not shared with you')
+                    return redirect('index')
+            
+            # Get the safe file path
+            file_path = get_safe_user_file_path(file.user.id, file.filename)
+            
+            if not file_path.exists():
+                messages.error(request, 'File does not exist on server')
+                return redirect('index')
+            
+            # Read and decrypt the file
+            encrypted_data = file_path.read_bytes()
+            decrypted_data = cipher_suite.decrypt(encrypted_data)
+            
+            # Create the response
+            response = HttpResponse(decrypted_data, content_type='application/octet-stream')
+            response['Content-Disposition'] = f'attachment; filename="{file.filename}"'
+            return response
+        
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('index')
+        except Exception as e:
+            messages.error(request, f'Error downloading file: {str(e)}')
+            return redirect('index')
+    else:
+        messages.error(request, 'Invalid request method')
+        return redirect('index')
+
+
 def index(request):
     """Home page view"""
     files = None
@@ -169,60 +224,6 @@ def upload_file(request):
     else:
         form = FileUploadForm()
     return render(request, 'upload.html', {'form': form})
-
-@login_required
-def download_file(request):
-    if request.method == 'GET':
-        filename = request.GET.get('filename')
-        if not filename:
-            messages.error(request, 'No filename provided')
-            return redirect('index')
-        
-        try:
-            # Ensure filename is safe
-            safe_filename = get_valid_filename(filename)
-            ext = validate_file_extension(safe_filename)
-            
-            # Try to get the file owned by the user
-            file = File.objects.filter(filename=safe_filename, user=request.user).first()
-            
-            if not file:
-                # Try to get the file shared with the user
-                shared_file = FileShare.objects.filter(
-                    file__filename=safe_filename,
-                    user=request.user
-                ).first()
-                if shared_file:
-                    file = shared_file.file
-                else:
-                    messages.error(request, 'File not found or not shared with you')
-                    return redirect('index')
-            
-            # Get the safe file path
-            file_path = get_safe_user_file_path(file.user.id, file.filename)
-            
-            if not file_path.exists():
-                messages.error(request, 'File does not exist on server')
-                return redirect('index')
-            
-            # Read and decrypt the file
-            encrypted_data = file_path.read_bytes()
-            decrypted_data = cipher_suite.decrypt(encrypted_data)
-            
-            # Create the response
-            response = HttpResponse(decrypted_data, content_type='application/octet-stream')
-            response['Content-Disposition'] = f'attachment; filename="{file.filename}"'
-            return response
-        
-        except ValidationError as e:
-            messages.error(request, str(e))
-            return redirect('index')
-        except Exception as e:
-            messages.error(request, f'Error downloading file: {str(e)}')
-            return redirect('index')
-    else:
-        messages.error(request, 'Invalid request method')
-        return redirect('index')
 
 @login_required
 def manage_friends(request):

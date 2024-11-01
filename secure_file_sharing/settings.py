@@ -1,3 +1,4 @@
+# secure_file_sharing/settings.py
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -33,8 +34,6 @@ LOGOUT_REDIRECT_URL = '/'
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 
-# Rest of your existing settings...
-
 # settings.py
 MEDIA_ROOT = BASE_DIR / 'media'
 
@@ -47,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'djangorestframework',
 ]
 
 MIDDLEWARE = [

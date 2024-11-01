@@ -1,3 +1,4 @@
+<!-- app/templates/download.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +7,16 @@
 </head>
 <body>
     <h1>Download File</h1>
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
     <form method="get" action="{% url 'download_file' %}">
         <label for="filename">Enter filename:</label>
-        <input type="text" id="filename" name="filename" placeholder="Enter filename"><br><br>
+        <input type="text" id="filename" name="filename" placeholder="Enter filename" required><br><br>
         <button type="submit">Download</button>
     </form>
     <a href="/">Back to Home</a>
