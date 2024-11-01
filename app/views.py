@@ -9,7 +9,7 @@ from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.utils.text import get_valid_filename
 from django.core.files.storage import default_storage
-from django.contrib.auth.models import User  # Added import
+from django.contrib.auth.models import User
 from .forms import UserRegistrationForm, FileUploadForm
 from .models import File, FileShare, Friend
 from cryptography.fernet import Fernet
@@ -29,6 +29,7 @@ cipher_suite = Fernet(key)
 def validate_file_extension(filename):
     """Validate file extension"""
     ext = Path(filename).suffix.lower()
+    print(f"Validating file extension: {ext}")  # Debugging statement
     if ext not in ALLOWED_EXTENSIONS:
         raise ValidationError(f'Invalid file extension. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
     return ext
@@ -109,8 +110,6 @@ def user_logout(request):
     logout(request)
     return redirect('index')
 
-# app/views.py
-# app/views.py
 @login_required
 def upload_file(request):
     if request.method == 'POST':
