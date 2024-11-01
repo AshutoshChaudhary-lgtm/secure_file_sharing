@@ -14,6 +14,17 @@ from cryptography.fernet import Fernet
 import os
 from pathlib import Path
 
+def index(request):
+    """Home page view"""
+    files = None
+    if request.user.is_authenticated:
+        files = File.objects.filter(user=request.user)
+        shared_files = File.objects.filter(shared_with=request.user)
+    return render(request, 'index.html', {
+        'files': files,
+        'shared_files': shared_files if request.user.is_authenticated else None
+    })
+
 # Constants
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB
 ALLOWED_EXTENSIONS = {'.txt', '.pdf', '.doc', '.docx', '.jpg', '.png'}
