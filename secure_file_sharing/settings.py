@@ -34,9 +34,6 @@ LOGOUT_REDIRECT_URL = '/'
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50MB
 
-# settings.py
-MEDIA_ROOT = BASE_DIR / 'media'
-
 # Application definition
 INSTALLED_APPS = [
     'app',
