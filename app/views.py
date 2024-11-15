@@ -69,7 +69,7 @@ def user_login(request):
             return redirect('index')
         else:
             messages.error(request, 'Invalid username or password.')
-    return render(request, 'login.html')
+    return render(request, 'app/login.html')  # Specify the app namespace
 
 @login_required
 def user_logout(request):
