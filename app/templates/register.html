@@ -1,3 +1,4 @@
+<!-- app/templates/register.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,11 +7,21 @@
 </head>
 <body>
     <h1>Register</h1>
+    
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
         <button type="submit">Register</button>
     </form>
+    
     <a href="/">Back to Home</a>
 </body>
 </html>
