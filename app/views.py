@@ -58,9 +58,6 @@ def register(request):
         form = UserRegistrationForm()
     return render(request, 'register.html', {'form': form})
 
-
-
-@login_required
 def user_login(request):
     """User login view."""
     if request.method == 'POST':
