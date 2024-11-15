@@ -82,12 +82,16 @@ def upload_file(request):
     """Upload file view."""
     if request.method == 'POST':
         form = FileUploadForm(request.POST, request.FILES)
+        uploaded_file = request.FILES.get('file')
+        
         if form.is_valid():
-            uploaded_file = form.cleaned_data['file']
+            # Validate file size
             if uploaded_file.size > MAX_FILE_SIZE:
-                messages.error(request, 'File size exceeds 50MB limit.')
+                messages.error(request, 'File size exceeds the allowed limit of 50MB.')
                 return redirect('upload_file')
-            ext = Path(uploaded_file.name).suffix.lower()
+            
+            # Validate file extension
+            ext = os.path.splitext(uploaded_file.name)[1].lower()
             if ext not in ALLOWED_EXTENSIONS:
                 messages.error(request, f'Invalid file extension. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
                 return redirect('upload_file')
@@ -139,18 +143,25 @@ def share_file(request):
         filename = request.POST.get('filename')
         friend_username = request.POST.get('friend_username')
         try:
-            friend = User.objects.get(username=friend_username)
             file = File.objects.get(filename=filename, user=request.user)
-            FileShare.objects.get_or_create(file=file, user=friend)
-            messages.success(request, f'File "{filename}" shared with {friend_username}.')
-        except User.DoesNotExist:
-            messages.error(request, 'Friend username does not exist.')
+            friend = User.objects.get(username=friend_username)
+            if friend == request.user:
+                messages.error(request, 'You cannot share files with yourself.')
+            else:
+                file_share, created = FileShare.objects.get_or_create(file=file, user=friend)
+                if created:
+                    messages.success(request, f'File "{filename}" shared with {friend_username}.')
+                else:
+                    messages.error(request, f'File "{filename}" is already shared with {friend_username}.')
         except File.DoesNotExist:
             messages.error(request, 'File does not exist.')
-        return redirect('friends')
-    else:
-        messages.error(request, 'Invalid request method.')
-        return redirect('friends')
+        except User.DoesNotExist:
+            messages.error(request, 'Friend username does not exist.')
+        return redirect('share_file')
+    
+    user_files = File.objects.filter(user=request.user)
+    friends = Friend.objects.filter(user=request.user)
+    return render(request, 'share.html', {'files': user_files, 'friends': [friend.friend for friend in friends]})
 
 @login_required
 def download_file(request):
@@ -209,40 +220,13 @@ def download_file(request):
 
 def validate_file_extension(filename):
     """Validate file extension"""
-    ext = Path(filename).suffix.lower()
+    ext = os.path.splitext(filename)[1].lower()
     if ext not in ALLOWED_EXTENSIONS:
-        raise ValidationError(f'Invalid file extension. Allowed: {", ".join(ALLOWED_EXTENSIONS)}')
+        raise ValidationError(f'Unsupported file extension: {ext}')
     return ext
 
 def get_safe_user_file_path(user_id, filename):
     """Safely construct file path within user's upload directory"""
-    try:
-        # Sanitize filename and get extension
-        safe_filename = get_valid_filename(filename)
-        ext = validate_file_extension(safe_filename)
-        
-        # Construct base upload path
-        base_path = Path(settings.MEDIA_ROOT) / 'uploads' / str(user_id)
-        base_path = base_path.resolve()
-        
-        # Ensure base_path is within MEDIA_ROOT
-        if not base_path.is_dir():
-            base_path.mkdir(parents=True, exist_ok=True)
-        if not str(base_path).startswith(str(settings.MEDIA_ROOT.resolve())):
-            raise ValidationError('Invalid base upload path')
-        
-        # Generate unique filename
-        file_path = base_path / safe_filename
-        counter = 1
-        while file_path.exists():
-            name = Path(safe_filename).stem
-            file_path = base_path / f"{name}_{counter}{ext}"
-            counter += 1
-            
-        # Verify path is within uploads directory
-        if not str(file_path).startswith(str(settings.MEDIA_ROOT.resolve())):
-            raise ValidationError('Invalid file path')
-            
-        return file_path
-    except (RuntimeError, OSError) as e:
-        raise ValidationError(f'Invalid path: {str(e)}')
+    user_upload_dir = Path(settings.MEDIA_ROOT) / f'user_{user_id}'
+    user_upload_dir.mkdir(parents=True, exist_ok=True)
+    return user_upload_dir / filename
