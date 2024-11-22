@@ -217,6 +217,28 @@ def download_file(request):
     else:
         messages.error(request, 'Invalid request method')
         return redirect('index')
+    
+@login_required
+def delete_file(request, file_id):
+    """Delete a file uploaded by the user."""
+    file = get_object_or_404(File, id=file_id, user=request.user)
+    file_path = get_safe_user_file_path(request.user.id, file.filename)
+    
+    if request.method == 'POST':
+        # Delete the file from the filesystem
+        if file_path.exists():
+            os.remove(file_path)
+        
+        # Delete the FileShare entries
+        FileShare.objects.filter(file=file).delete()
+        
+        # Delete the File record
+        file.delete()
+        
+        messages.success(request, 'File deleted successfully.')
+        return redirect('index')
+    
+    return render(request, 'delete_confirm.html', {'file': file})
 
 def validate_file_extension(filename):
     """Validate file extension"""

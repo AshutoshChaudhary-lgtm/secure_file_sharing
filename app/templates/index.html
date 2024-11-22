@@ -22,7 +22,11 @@
         {% if files %}
             <ul>
                 {% for file in files %}
-                    <li>{{ file.filename }}</li>
+                    <li>
+                        {{ file.filename }}
+                        <a href="{% url 'download_file' %}?filename={{ file.filename }}">Download</a> |
+                        <a href="{% url 'delete_file' file.id %}">Delete</a>
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
@@ -43,7 +47,6 @@
         <a href="{% url 'upload_file' %}">Upload File</a><br>
         <a href="{% url 'download_file' %}?filename=yourfile.txt">Download File</a><br>
         <a href="{% url 'friends' %}">Manage Friends</a><br>
-        <a href="{% url 'share_file' %}">Share File</a><br>
         <a href="{% url 'logout' %}">Logout</a><br>
     {% else %}
         <h2>Welcome to the File Sharing System</h2>
@@ -54,7 +57,6 @@
                 {% endfor %}
             </ul>
         {% endif %}
-        
         <a href="{% url 'register' %}">Register</a><br>
         <a href="{% url 'login' %}">Login</a><br>
     {% endif %}
