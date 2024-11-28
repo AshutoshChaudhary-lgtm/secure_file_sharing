@@ -1,64 +1,51 @@
 <!-- app/templates/index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>File Sharing System</title>
-</head>
-<body>
-    <h1>File Sharing System</h1>
-    
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
+{% extends 'base.html' %}
+
+{% block title %}Home - File Sharing System{% endblock %}
+
+{% block content %}
+    <h1 class="mb-4">File Sharing System</h1>
     
     {% if user.is_authenticated %}
-        <h2>Welcome, {{ user.username }}</h2>
-        <h3>Your Files:</h3>
-        {% if files %}
-            <ul>
-                {% for file in files %}
-                    <li>
-                        {{ file.filename }}
-                        <a href="{% url 'download_file' %}?filename={{ file.filename }}">Download</a> |
-                        <a href="{% url 'delete_file' file.id %}">Delete</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No files uploaded yet.</p>
-        {% endif %}
-
-        <h3>Files Shared With You:</h3>
-        {% if shared_files %}
-            <ul>
-                {% for file_share in shared_files %}
-                    <li>{{ file_share.file.filename }} (from {{ file_share.file.user.username }})</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No files shared with you.</p>
-        {% endif %}
+        <h2 class="mb-3">Welcome, {{ user.username }}</h2>
         
-        <a href="{% url 'upload_file' %}">Upload File</a><br>
-        <a href="{% url 'download_file' %}?filename=yourfile.txt">Download File</a><br>
-        <a href="{% url 'friends' %}">Manage Friends</a><br>
-        <a href="{% url 'logout' %}">Logout</a><br>
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Your Files:</h3>
+                {% if files %}
+                    <ul class="list-group mb-4">
+                        {% for file in files %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ file.filename }}
+                                <div>
+                                    <a href="{% url 'download_file' %}?filename={{ file.filename }}" class="btn btn-primary btn-sm">Download</a>
+                                    <a href="{% url 'delete_file' file.id %}" class="btn btn-danger btn-sm">Delete</a>
+                                </div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No files uploaded yet.</p>
+                {% endif %}
+            </div>
+            
+            <div class="col-md-6">
+                <h3>Files Shared With You:</h3>
+                {% if shared_files %}
+                    <ul class="list-group mb-4">
+                        {% for file_share in shared_files %}
+                            <li class="list-group-item">
+                                {{ file_share.file.filename }} <span class="badge bg-secondary">from {{ file_share.file.user.username }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>No files shared with you.</p>
+                {% endif %}
+            </div>
+        </div>
     {% else %}
-        <h2>Welcome to the File Sharing System</h2>
-        {% if messages %}
-            <ul>
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-        <a href="{% url 'register' %}">Register</a><br>
-        <a href="{% url 'login' %}">Login</a><br>
+        <h2 class="mb-3">Welcome to the File Sharing System</h2>
+        <p>Please <a href="{% url 'login' %}">login</a> or <a href="{% url 'register' %}">register</a> to continue.</p>
     {% endif %}
-</body>
-</html>
+{% endblock %}

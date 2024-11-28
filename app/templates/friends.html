@@ -1,60 +1,36 @@
-<!-- app/templates/index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>File Sharing System</title>
-</head>
-<body>
-    <h1>File Sharing System</h1>
-    
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    
-    {% if user.is_authenticated %}
-        <h2>Welcome, {{ user.username }}</h2>
-        <h3>Your Files:</h3>
-        {% if files %}
-            <ul>
-                {% for file in files %}
-                    <li>{{ file.filename }}</li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>No files uploaded yet.</p>
-        {% endif %}
+<!-- app/templates/friends.html -->
+{% extends 'base.html' %}
 
-        <h3>Files Shared With You:</h3>
-        {% if shared_files %}
-            <ul>
-                {% for file_share in shared_files %}
-                    <li>{{ file_share.file.filename }} (from {{ file_share.file.user.username }})</li>
+{% block title %}Manage Friends - File Sharing System{% endblock %}
+
+{% block content %}
+    <h2 class="mb-4">Manage Friends</h2>
+    
+    <div class="mb-4">
+        <h4>Add a Friend</h4>
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-auto">
+                <input type="text" name="friend_username" class="form-control" placeholder="Friend's Username" required>
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary mb-3">Add Friend</button>
+            </div>
+        </form>
+    </div>
+    
+    <div>
+        <h4>Your Friends</h4>
+        {% if friends %}
+            <ul class="list-group">
+                {% for friend in friends %}
+                    <li class="list-group-item">
+                        {{ friend.username }}
+                    </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>No files shared with you.</p>
+            <p>You have no friends added.</p>
         {% endif %}
-        
-        <a href="{% url 'upload_file' %}">Upload File</a><br>
-        <a href="{% url 'download_file' %}">Download File</a><br>
-        <a href="{% url 'friends' %}">Manage Friends</a><br>
-        <a href="{% url 'logout' %}">Logout</a><br>
-    {% else %}
-        {% if messages %}
-            <ul>
-                {% for message in messages %}
-                    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-        
-        <a href="{% url 'register' %}">Register</a><br>
-        <a href="{% url 'login' %}">Login</a><br>
-    {% endif %}
-</body>
-</html>
+    </div>
+{% endblock %}
