@@ -3,25 +3,35 @@
 /* Custom Styles */
 
 body {
-    background-color: #f8f9fa;
+    background-color: #f0f2f5;
 }
 
-h1, h2, h3 {
-    color: #343a40;
+.jumbotron {
+    background-color: #ffffff;
+    padding: 2rem 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+.card-header {
+    font-size: 1.25rem;
 }
 
-.btn-primary {
-    background-color: #007bff;
+.btn-lg {
+    margin: 0.5rem;
 }
 
-.btn-danger {
-    background-color: #dc3545;
+.list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.navbar-brand {
-    font-weight: bold;
+.badge-secondary {
+    background-color: #6c757d;
+}
+
+.disabled {
+    pointer-events: none;
+    opacity: 0.65;
 }
