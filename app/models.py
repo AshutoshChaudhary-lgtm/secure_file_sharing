@@ -9,15 +9,15 @@ class File(models.Model):
     def __str__(self):
         return f"{self.filename} (Owner: {self.user.username})"
 
-class Friend(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friends')
-    friend = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_of')
+# class Friend(models.Model):
+#     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friends')
+#     friend = models.ForeignKey(User, on_delete=models.CASCADE, related_name='friend_of')
     
-    class Meta:
-        unique_together = ['user', 'friend']
+#     class Meta:
+#         unique_together = ['user', 'friend']
     
-    def __str__(self):
-        return f"{self.user.username} -> {self.friend.username}"
+#     def __str__(self):
+#         return f"{self.user.username} -> {self.friend.username}"
 
 class FileShare(models.Model):
     file = models.ForeignKey(File, on_delete=models.CASCADE)

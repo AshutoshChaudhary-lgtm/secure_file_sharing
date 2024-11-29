@@ -13,3 +13,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
+
+// Added Work in Progress function
+function showWorkInProgress() {
+    alert("Work in Progress");
+}

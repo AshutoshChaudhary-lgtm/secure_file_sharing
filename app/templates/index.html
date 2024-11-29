@@ -1,4 +1,5 @@
 <!-- app/templates/index.html -->
+
 {% extends 'base.html' %}
 
 {% block title %}Home - File Sharing System{% endblock %}
@@ -37,18 +38,8 @@
                 <div class="card text-white bg-info mb-3">
                     <div class="card-header">Files Shared With You</div>
                     <div class="card-body">
-                        {% if shared_files %}
-                            <ul class="list-group">
-                                {% for file_share in shared_files %}
-                                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                                        {{ file_share.file.filename }}
-                                        <span class="badge badge-secondary">from {{ file_share.file.user.username }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="text-center">No files shared with you.</p>
-                        {% endif %}
+                        <!-- Commented out shared_files as FileShare is removed -->
+                        <p class="text-center">Work in Progress</p>
                     </div>
                 </div>
             </div>
@@ -57,7 +48,8 @@
         <div class="text-center mb-4">
             <a href="{% url 'upload_file' %}" class="btn btn-primary btn-lg">Upload File</a>
             <a href="{% url 'download_file' %}" class="btn btn-success btn-lg">Download File</a>
-            <a href="{% url 'friends' %}" class="btn btn-warning btn-lg">Manage Friends</a>
+            <!-- Friends button updated -->
+            <a href="#" class="btn btn-warning btn-lg" onclick="showWorkInProgress()">Manage Friends</a>
             <a href="{% url 'logout' %}" class="btn btn-secondary btn-lg">Logout</a>
         </div>
     {% else %}
@@ -77,6 +69,10 @@
     {% endif %}
 
     <script>
+        function showWorkInProgress() {
+            alert("Work in Progress");
+        }
+
         function confirmDelete(fileId) {
             if (confirm("Are you sure you want to delete this file?")) {
                 window.location.href = "{% url 'delete_file' 0 %}".replace("0", fileId);

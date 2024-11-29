@@ -114,27 +114,27 @@ def upload_file(request):
         form = FileUploadForm()
     return render(request, 'upload.html', {'form': form})
 
-@login_required
-def manage_friends(request):
-    """Manage friends list."""
-    if request.method == 'POST':
-        friend_username = request.POST.get('friend_username')
-        try:
-            friend = User.objects.get(username=friend_username)
-            if friend == request.user:
-                messages.error(request, 'You cannot add yourself as a friend.')
-            else:
-                friendship, created = Friend.objects.get_or_create(user=request.user, friend=friend)
-                if created:
-                    messages.success(request, f'Added {friend_username} as a friend.')
-                else:
-                    messages.error(request, f'{friend_username} is already your friend.')
-        except User.DoesNotExist:
-            messages.error(request, 'Friend username does not exist.')
-        return redirect('friends')
+# @login_required
+# def manage_friends(request):
+#     """Manage friends list."""
+#     if request.method == 'POST':
+#         friend_username = request.POST.get('friend_username')
+#         try:
+#             friend = User.objects.get(username=friend_username)
+#             if friend == request.user:
+#                 messages.error(request, 'You cannot add yourself as a friend.')
+#             else:
+#                 friendship, created = Friend.objects.get_or_create(user=request.user, friend=friend)
+#                 if created:
+#                     messages.success(request, f'Added {friend_username} as a friend.')
+#                 else:
+#                     messages.error(request, f'{friend_username} is already your friend.')
+#         except User.DoesNotExist:
+#             messages.error(request, 'Friend username does not exist.')
+#         return redirect('friends')
     
-    friends = Friend.objects.filter(user=request.user)
-    return render(request, 'friends.html', {'friends': [friend.friend for friend in friends]})
+#     friends = Friend.objects.filter(user=request.user)
+#     return render(request, 'friends.html', {'friends': [friend.friend for friend in friends]})
 
 @login_required
 def share_file(request):
