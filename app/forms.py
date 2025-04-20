@@ -11,8 +11,12 @@ class UserRegistrationForm(forms.ModelForm):
         fields = ['username', 'email', 'password']
 
 class FileUploadForm(forms.ModelForm):
-    file = forms.FileField()
-
+    file = forms.FileField(help_text="Select a file to upload (max 50MB)")
+    
     class Meta:
         model = File
-        fields = ['file']
+        fields = ['filename']
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['filename'].required = False  # We'll set this from the uploaded file
