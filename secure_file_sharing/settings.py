@@ -7,10 +7,13 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load environment variables
-load_dotenv()
+try:
+    load_dotenv()
+except Exception:
+    pass
 
-# Get SECRET_KEY from environment variable
-SECRET_KEY = os.getenv('SECRET_KEY')
+# Get SECRET_KEY from environment variable or use a default one for development
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-dev-key-for-testing-only')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
