@@ -1,4 +1,4 @@
-// app/static/js/scripts.js
+// static/js/script.js
 
 // Example: Confirm before deleting a file
 document.addEventListener('DOMContentLoaded', function () {
@@ -12,4 +12,16 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
     });
+
+    // Navbar scroll effect
+    const navbar = document.querySelector('.navbar');
+    if (navbar) { // Check if navbar exists
+        window.addEventListener('scroll', function() {
+            if (window.scrollY > 50) { // Add class after scrolling 50px
+                navbar.classList.add('navbar-scrolled');
+            } else {
+                navbar.classList.remove('navbar-scrolled');
+            }
+        });
+    }
 });

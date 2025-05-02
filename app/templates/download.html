@@ -1,24 +1,22 @@
 <!-- app/templates/download.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Download File</title>
-</head>
-<body>
-    <h1>Download File</h1>
-    {% if messages %}
-        <ul>
-            {% for message in messages %}
-                <li>{{ message }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
-    <form method="get" action="{% url 'download_file' %}">
-        <label for="filename">Enter filename:</label>
-        <input type="text" id="filename" name="filename" placeholder="Enter filename" required><br><br>
-        <button type="submit">Download</button>
-    </form>
-    <a href="/">Back to Home</a>
-</body>
-</html>
+{% extends 'base.html' %}
+
+{% block title %}Download File - File Sharing System{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-header">
+            <h3>Download File</h3>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'download_file' %}" class="mb-3">
+                <div class="mb-3">
+                    <label for="filename" class="form-label">Enter filename:</label>
+                    <input type="text" id="filename" name="filename" class="form-control" placeholder="Enter filename" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Download</button>
+            </form>
+            <a href="{% url 'index' %}" class="btn btn-secondary">Back to Home</a>
+        </div>
+    </div>
+{% endblock %}

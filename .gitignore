@@ -1,0 +1,22 @@
+# Secrets
+key.key
+.env
+
+# Environment
+venv/
+
+# Database
+db.sqlite3
+
+# Media Files
+media/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# OS generated files
+.DS_Store
+
+# IDE specific
+.vscode/
