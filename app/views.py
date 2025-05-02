@@ -210,29 +210,60 @@ def manage_friends(request):
 @login_required
 def share_file(request):
     """Share a file with a friend."""
+    user_files = File.objects.filter(user=request.user)
+    friends = Friend.objects.filter(user=request.user).select_related('friend') # Optimize query
+
     if request.method == 'POST':
         filename = request.POST.get('filename')
         friend_username = request.POST.get('friend_username')
+
+        if not filename or not friend_username:
+            messages.error(request, 'Please select both a file and a friend.')
+            return redirect('share_file')
+
         try:
-            file = File.objects.get(filename=filename, user=request.user)
-            friend = User.objects.get(username=friend_username)
-            if friend == request.user:
+            # 1. Get the file owned by the current user
+            file_to_share = File.objects.get(filename=filename, user=request.user)
+
+            # 2. Get the friend user object
+            friend_user = User.objects.get(username=friend_username)
+
+            # 3. Check if the selected user is actually a friend
+            if not Friend.objects.filter(user=request.user, friend=friend_user).exists():
+                messages.error(request, f'{friend_username} is not in your friends list.')
+                return redirect('share_file')
+
+            # 4. Prevent sharing with oneself
+            if friend_user == request.user:
                 messages.error(request, 'You cannot share files with yourself.')
+                return redirect('share_file')
+
+            # 5. Create the share record
+            file_share, created = FileShare.objects.get_or_create(
+                file=file_to_share,
+                user=friend_user  # The user the file is shared WITH
+            )
+
+            if created:
+                messages.success(request, f'File "{filename}" shared successfully with {friend_username}.')
             else:
-                file_share, created = FileShare.objects.get_or_create(file=file, user=friend)
-                if created:
-                    messages.success(request, f'File "{filename}" shared with {friend_username}.')
-                else:
-                    messages.error(request, f'File "{filename}" is already shared with {friend_username}.')
+                messages.info(request, f'File "{filename}" is already shared with {friend_username}.')
+
         except File.DoesNotExist:
-            messages.error(request, 'File does not exist.')
+            messages.error(request, 'File not found or you do not own it.')
         except User.DoesNotExist:
-            messages.error(request, 'Friend username does not exist.')
-        return redirect('share_file')
-    
-    user_files = File.objects.filter(user=request.user)
-    friends = Friend.objects.filter(user=request.user)
-    return render(request, 'share.html', {'files': user_files, 'friends': [friend.friend for friend in friends]})
+            messages.error(request, 'Selected friend username does not exist.')
+        except Exception as e:
+            messages.error(request, f"An unexpected error occurred: {e}")
+
+        return redirect('share_file') # Redirect back to the share page after POST
+
+    # Prepare context for GET request
+    context = {
+        'files': user_files,
+        'friends': [f.friend for f in friends] # Pass the actual User objects of friends
+    }
+    return render(request, 'share.html', context)
 
 @login_required
 def download_file(request):
