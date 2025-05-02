@@ -1,0 +1,38 @@
+<!-- app/templates/share.html -->
+{% extends 'base.html' %}
+
+{% block title %}Share File - File Sharing System{% endblock %}
+
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-header">
+            <h3>Share File with a Friend</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" class="mb-3">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="filename" class="form-label">Select File:</label>
+                    <select name="filename" id="filename" class="form-select" required>
+                        <option value="">-- Select a file --</option>
+                        {% for file in files %}
+                            <option value="{{ file.filename }}">{{ file.filename }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="friend_username" class="form-label">Select Friend:</label>
+                    <select name="friend_username" id="friend_username" class="form-select" required>
+                        <option value="">-- Select a friend --</option>
+                        {% for friend in friends %}
+                            <option value="{{ friend.username }}">{{ friend.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary">Share File</button>
+            </form>
+        </div>
+    </div>
+    
+    <a href="{% url 'index' %}" class="btn btn-secondary">Back to Home</a>
+{% endblock %}

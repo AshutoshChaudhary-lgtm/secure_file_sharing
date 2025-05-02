@@ -1,9 +1,15 @@
-/* app/static/css/styles.css */
+/* static/css/style.css */
 
 /* Custom Styles */
 
+:root {
+    --bs-primary-rgb: 32, 201, 151; /* Teal color for Bootstrap components */
+    --bs-primary: #20c997;
+}
+
 body {
-    background-color: #f8f9fa;
+    background-color: #f8f9fa; /* Lighter background */
+    color: #495057; /* Default text color */
 }
 
 h1, h2, h3 {
@@ -11,11 +17,15 @@ h1, h2, h3 {
 }
 
 .card {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Even softer shadow */
+    margin-bottom: 25px; /* Increased margin */
+    border-radius: 8px; /* Slightly less rounded */
+    /* Removed fade-in animation for now, can be added back if desired */
 }
 
 .btn-primary {
-    background-color: #007bff;
+    /* Uses --bs-primary defined above */
+    border-color: var(--bs-primary);
 }
 
 .btn-danger {
@@ -24,4 +34,85 @@ h1, h2, h3 {
 
 .navbar-brand {
     font-weight: bold;
+}
+
+/* Added login form styling */
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Add responsive container padding */
+.container {
+    padding-bottom: 30px;
+}
+
+/* Improve form styling */
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth focus transition */
+}
+
+/* Fix alert messages */
+.alert {
+    margin-top: 20px;
+}
+
+/* Improve card headers */
+.card-header {
+    background-color: #ffffff; /* Cleaner white header */
+    color: #495057; /* Darker text for contrast */
+    border-bottom: 1px solid #dee2e6; /* Subtle border */
+    border-top-left-radius: 8px; /* Match card radius */
+    border-top-right-radius: 8px; /* Match card radius */
+    font-weight: 500; /* Slightly bolder header text */
+}
+
+/* Custom Enhancements */
+.btn, .btn-group .btn {
+    border-radius: 6px; /* Less rounded buttons */
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.btn:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15); /* Adjusted hover shadow */
+    transform: translateY(-1px);
+}
+
+.btn-primary:hover {
+    filter: brightness(90%); /* Darken primary color on hover */
+}
+
+.btn-outline-primary {
+    color: var(--bs-primary);
+    border-color: var(--bs-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    color: #fff;
+}
+
+.list-group-item {
+    border-color: #e9ecef; /* Lighter border for list items */
+}
+
+.list-group-item:hover {
+    background-color: #e9ecef; /* Slightly darker hover for list items */
+}
+
+/* Style for scrolled navbar */
+.navbar-scrolled {
+    /* Keep primary color, maybe add slight transparency or shadow if needed */
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+    transition: background-color 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+}
+
+footer {
+    font-size: 0.9em;
+}
+
+footer small {
+    /* Inherits muted color from footer class */
 }

@@ -1,28 +1,35 @@
-<!-- app/templates/login.html -->
 {% extends 'base.html' %}
 
-{% block title %}Login - File Sharing System{% endblock %}
+{% block title %}Login - FileShare{% endblock %}
 
 {% block content %}
-    <div class="card">
-        <div class="card-header">
-            <h3>Login</h3>
-        </div>
-        <div class="card-body">
-            <form method="post" class="mb-3">
-                {% csrf_token %}
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username:</label>
-                    <input type="text" id="username" name="username" class="form-control" required>
+    <div class="row justify-content-center mt-5">
+        <div class="col-md-6 col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-header">
+                    <h3 class="mb-0 text-center"><i class="fas fa-sign-in-alt me-2"></i>Login</h3>
                 </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password:</label>
-                    <input type="password" id="password" name="password" class="form-control" required>
+                <div class="card-body">
+                    <form method="post" class="mb-4">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="username" class="form-label">Username:</label>
+                            <input type="text" id="username" name="username" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password:</label>
+                            <input type="password" id="password" name="password" class="form-control form-control-lg" required>
+                        </div>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg">Login</button>
+                        </div>
+                    </form>
+                    <div class="text-center">
+                        <p>Don't have an account? <a href="{% url 'register' %}">Register here</a></p>
+                        <a href="{% url 'index' %}" class="btn btn-outline-secondary"><i class="fas fa-home me-1"></i>Back to Home</a>
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Login</button>
-            </form>
-            <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
-            <a href="{% url 'index' %}" class="btn btn-secondary">Back to Home</a>
+            </div>
         </div>
     </div>
 {% endblock %}

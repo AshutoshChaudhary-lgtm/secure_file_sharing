@@ -2,6 +2,8 @@
 from django.contrib import admin
 from django.urls import path
 from app import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -15,3 +17,8 @@ urlpatterns = [
     path('share/', views.share_file, name='share_file'),
     path('delete/<int:file_id>/', views.delete_file, name='delete_file'),  
 ]
+
+# Add media and static URLs for development
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATICFILES_DIRS[0])

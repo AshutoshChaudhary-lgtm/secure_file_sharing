@@ -120,16 +120,27 @@ def register(request):
 
 def user_login(request):
     """User login view."""
+    # Check if the user is already authenticated
+    if request.user.is_authenticated:
+        return redirect('index')
+    
+    # Create context for login page
+    context = {}
+    
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         user = authenticate(request, username=username, password=password)
         if user:
             login(request, user)
-            return redirect('index')
+            # Redirect to the original page if 'next' parameter exists
+            next_url = request.GET.get('next', 'index')
+            return redirect(next_url)
         else:
             messages.error(request, 'Invalid username or password.')
-    return render(request, 'login.html')  # Corrected template path
+            context['error'] = 'Invalid username or password.'
+    
+    return render(request, 'login.html', context)
 
 @login_required
 def user_logout(request):

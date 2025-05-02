@@ -11,7 +11,7 @@ error_exit() {
 
 # Create the virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
-    python3.12 -m venv venv || error_exit "Failed to create virtual environment."
+    python3.13 -m venv venv || error_exit "Failed to create virtual environment."
     echo "Virtual environment created."
 fi
 
