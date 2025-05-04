@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Upload File - SecureShare{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card">
+        <div class="card-header">
+            <h1><i class="fas fa-cloud-upload-alt"></i> Upload File</h1>
+        </div>
+        
+        <div class="upload-section" id="drop-area">
+            <div class="upload-icon">
+                <i class="fas fa-file-upload"></i>
+            </div>
+            <h3>Drag and drop files here</h3>
+            <p>or</p>
+            <form method="POST" enctype="multipart/form-data" id="upload-form">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="file" class="btn btn-primary">
+                        <i class="fas fa-folder-open"></i> Browse Files
+                    </label>
+                    <input type="file" name="file" id="file" required style="display: none;">
+                </div>
+                <div class="selected-file" id="selected-file" style="display: none; margin: 15px 0;">
+                    <p><i class="fas fa-file"></i> <span id="file-name">No file selected</span></p>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> Upload File
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="notification-area"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // File input change handler
+    document.getElementById('file').addEventListener('change', function(e) {
+        const fileName = e.target.files[0] ? e.target.files[0].name : 'No file selected';
+        document.getElementById('file-name').textContent = fileName;
+        document.getElementById('selected-file').style.display = 'block';
+    });
+    
+    // Drag and drop functionality
+    const dropArea = document.getElementById('drop-area');
+    
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+        dropArea.classList.add('highlight');
+    }
+    
+    function unhighlight() {
+        dropArea.classList.remove('highlight');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            document.getElementById('file').files = files;
+            document.getElementById('file-name').textContent = files[0].name;
+            document.getElementById('selected-file').style.display = 'block';
+        }
+    }
+    
+    // Initialize WebSocket connection for real-time notifications
+    const socket = new WebSocket('ws://localhost:8000/ws/notifications/');
+    
+    socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const notificationArea = document.getElementById('notification-area');
+        notificationArea.innerHTML += `
+            <div class="notification">
+                <div class="notification-title">Notification</div>
+                <div class="notification-message">${data.message}</div>
+            </div>`;
+    };
+</script>
+{% endblock %}

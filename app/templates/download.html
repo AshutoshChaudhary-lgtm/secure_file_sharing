@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download File</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+</head>
+<body>
+    {% include 'base.html' %}
+    <div class="container">
+        <h1>Download File</h1>
+        <p>You are about to download the file: <strong>{{ file.file_name }}</strong></p>
+        <a href="{% url 'download_file' file.id %}?download=true" class="btn btn-primary">Download</a>
+        <hr>
+        <h2>Comments</h2>
+        <div id="comments-section">
+            {% for comment in comments %}
+                <div class="comment">
+                    <strong>{{ comment.user.username }}</strong>: {{ comment.content }}
+                </div>
+            {% empty %}
+                <p>No comments yet.</p>
+            {% endfor %}
+        </div>
+        <hr>
+        <h2>Add a Comment</h2>
+        <form method="POST" action="{% url 'comment_on_file' file.id %}">
+            {% csrf_token %}
+            <textarea name="comment" rows="4" required></textarea>
+            <button type="submit" class="btn btn-secondary">Submit Comment</button>
+        </form>
+    </div>
+    <script src="{% static 'js/websocket.js' %}"></script>
+    <script src="{% static 'js/notifications.js' %}"></script>
+</body>
+</html>

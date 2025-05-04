@@ -1,0 +1,285 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}DropLock - Dashboard{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-section">
+        <h1>Welcome to DropLock</h1>
+        <p>Your secure file sharing platform with real-time notifications.</p>
+    </div>
+
+    <!-- Upload section with drag & drop interface -->
+    <div class="upload-section" onclick="document.getElementById('uploadForm').click()">
+        <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <h3>Drag files here or click to upload</h3>
+        <p>Share files securely with anyone</p>
+        <form action="{% url 'upload_file' %}" method="post" enctype="multipart/form-data" style="display:none;">
+            {% csrf_token %}
+            <input type="file" name="file" id="uploadForm" onchange="this.form.submit()">
+        </form>
+    </div>
+
+    <!-- Your Files Section -->
+    <div class="dashboard-section">
+        <div class="card-header">
+            <h2><i class="fas fa-file-alt"></i> Your Files</h2>
+            <a href="{% url 'upload_file' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> Upload New
+            </a>
+        </div>
+        
+        {% if owned_files %}
+        <div class="files-grid">
+            {% for file in owned_files %}
+            <div class="card" id="file-{{ file.file_id }}">
+                <div class="file-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="file-info">
+                    <h3>{{ file.file_name }}</h3>
+                    <p><small>Uploaded: {{ file.timestamp|date:"M d, Y" }}</small></p>
+                </div>
+                <div class="file-actions">
+                    <a href="{% url 'download_file' file_id=file.file_id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                    <button class="btn btn-secondary btn-sm share-file-btn" data-fileid="{{ file.file_id }}" data-filename="{{ file.file_name }}">
+                        <i class="fas fa-share-alt"></i> Share
+                    </button>
+                    <a href="{% url 'delete_file' file_id=file.file_id %}" class="btn btn-danger btn-sm delete-file-btn" onclick="return confirm('Are you sure you want to delete this file?');">
+                        <i class="fas fa-trash"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <p class="text-center">You haven't uploaded any files yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Shared With You Section -->
+    <div class="dashboard-section">
+        <div class="card-header">
+            <h2><i class="fas fa-share-alt"></i> Shared With You</h2>
+        </div>
+        
+        {% if shared_files %}
+        <div class="files-grid">
+            {% for file in shared_files %}
+            <div class="card">
+                <div class="file-icon">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div class="file-info">
+                    <h3>{{ file.file_name }}</h3>
+                    <p><small>Shared by: {{ file.owner_username }}</small></p>
+                </div>
+                <div class="file-actions">
+                    <a href="{% url 'download_file' file_id=file.file_id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                    <a href="#" class="btn btn-secondary btn-sm comment-file-btn" data-fileid="{{ file.file_id }}" data-filename="{{ file.file_name }}">
+                        <i class="fas fa-comment"></i> Comment
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+            <p class="text-center">No files have been shared with you yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Recent Activity Section -->
+    <div class="dashboard-section">
+        <div class="card-header">
+            <h2><i class="fas fa-bell"></i> Recent Activity</h2>
+        </div>
+        <div class="card">
+            <ul id="notification-list" class="notification-list">
+                <!-- Notifications will be dynamically added here -->
+                <li class="notification-item">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Your activity will appear here</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Share File Modal -->
+<div id="shareFileModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; border-radius: var(--radius); box-shadow: var(--shadow-lg);">
+        <span class="close" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2>Share File</h2>
+        <p>Share <span id="shareFileName"></span> with your friends:</p>
+        <form id="shareFileForm">
+            {% csrf_token %}
+            <input type="hidden" id="shareFileId" name="file_id">
+            <div class="form-group">
+                <label for="friendUsername">Friend's Username:</label>
+                <input type="text" id="friendUsername" name="friend_username" required>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Share</button>
+            </div>
+        </form>
+        <div id="shareResult"></div>
+    </div>
+</div>
+
+<!-- Comment Modal -->
+<div id="commentModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; border-radius: var(--radius); box-shadow: var(--shadow-lg);">
+        <span class="close" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2>Add Comment</h2>
+        <p>Add a comment to <span id="commentFileName"></span>:</p>
+        <form id="commentForm" method="POST">
+            {% csrf_token %}
+            <input type="hidden" id="commentFileId" name="file_id">
+            <div class="form-group">
+                <label for="commentText">Comment:</label>
+                <textarea id="commentText" name="comment" required class="form-control" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Add Comment</button>
+            </div>
+        </form>
+        <div id="commentResult"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Share File Modal
+        const shareModal = document.getElementById('shareFileModal');
+        const shareButtons = document.querySelectorAll('.share-file-btn');
+        const shareCloseBtn = shareModal.querySelector('.close');
+        const shareForm = document.getElementById('shareFileForm');
+        const shareResult = document.getElementById('shareResult');
+        
+        // Open share modal
+        shareButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const fileId = this.getAttribute('data-fileid');
+                const fileName = this.getAttribute('data-filename');
+                
+                document.getElementById('shareFileId').value = fileId;
+                document.getElementById('shareFileName').textContent = fileName;
+                
+                shareModal.style.display = 'block';
+            });
+        });
+        
+        // Close share modal
+        shareCloseBtn.addEventListener('click', function() {
+            shareModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target === shareModal) {
+                shareModal.style.display = 'none';
+            }
+        });
+        
+        // Share file form submission
+        shareForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileId = document.getElementById('shareFileId').value;
+            const friendUsername = document.getElementById('friendUsername').value;
+            
+            // Display loading indicator
+            shareResult.innerHTML = '<div class="loader"></div>';
+            
+            // Send Ajax request to share file
+            fetch('{% url "share_file" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({
+                    'file_id': fileId,
+                    'friend_username': friendUsername
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    shareResult.innerHTML = `
+                        <div class="notification file-shared">
+                            <div class="notification-title">Success</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                    // Clear input field
+                    document.getElementById('friendUsername').value = '';
+                } else {
+                    shareResult.innerHTML = `
+                        <div class="notification error">
+                            <div class="notification-title">Error</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                shareResult.innerHTML = `
+                    <div class="notification error">
+                        <div class="notification-title">Error</div>
+                        <div class="notification-message">An error occurred while processing your request.</div>
+                    </div>
+                `;
+                console.error('Error:', error);
+            });
+        });
+        
+        // Comment Modal
+        const commentModal = document.getElementById('commentModal');
+        const commentButtons = document.querySelectorAll('.comment-file-btn');
+        const commentCloseBtn = commentModal.querySelector('.close');
+        const commentForm = document.getElementById('commentForm');
+        
+        // Open comment modal
+        commentButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const fileId = this.getAttribute('data-fileid');
+                const fileName = this.getAttribute('data-filename');
+                
+                document.getElementById('commentFileId').value = fileId;
+                document.getElementById('commentFileName').textContent = fileName;
+                
+                // Set the form action
+                commentForm.action = `/comment/${fileId}/`;
+                
+                commentModal.style.display = 'block';
+            });
+        });
+        
+        // Close comment modal
+        commentCloseBtn.addEventListener('click', function() {
+            commentModal.style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target === commentModal) {
+                commentModal.style.display = 'none';
+            }
+        });
+    });
+</script>
+{% endblock %}

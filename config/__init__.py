@@ -1,0 +1,1 @@
+# This file initializes the secure_file_sharing package.

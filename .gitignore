@@ -80,6 +80,7 @@ temp_file_flow/yarn-error.log*
 # Media and uploads - When deployed, these should be stored elsewhere
 media/uploads/*
 !media/uploads/.gitkeep
+!media/.gitkeep
 
 # Coverage reports
 htmlcov/

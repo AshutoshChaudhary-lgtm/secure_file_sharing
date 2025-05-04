@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}DropLock{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Firebase SDK - Compatibility version -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Firebase SDK - Modular version -->
+    <script type="module">
+      // Import the functions you need from the SDKs you need
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+      import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-analytics.js";
+      import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js";
+      import { getDatabase, ref, onChildAdded, onChildChanged, get, query, orderByChild, equalTo } 
+             from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+      
+      // Make functions available globally for our firebase-modern.js script
+      window.initializeApp = initializeApp;
+      window.getAnalytics = getAnalytics;
+      window.getAuth = getAuth;
+      window.onAuthStateChanged = onAuthStateChanged;
+      window.getDatabase = getDatabase;
+      window.ref = ref;
+      window.get = get;
+      window.onChildAdded = onChildAdded;
+      window.onChildChanged = onChildChanged;
+      window.query = query;
+      window.orderByChild = orderByChild;
+      window.equalTo = equalTo;
+    </script>
+    
+    <script src="{% static 'js/firebase-init.js' %}"></script>
+    <script src="{% static 'js/firebase-modern.js' %}"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{% static 'js/websocket.js' %}"></script>
+    <script src="{% static 'js/notifications.js' %}"></script>
+    
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="{% url 'index' %}" class="logo">
+                <i class="fas fa-shield-alt"></i> DropLock
+            </a>
+            <ul>
+                <li><a href="{% url 'index' %}"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="{% url 'upload_file' %}"><i class="fas fa-upload"></i> Upload</a></li>
+                <li><a href="{% url 'friends' %}"><i class="fas fa-users"></i> Friends</a></li>
+                <li><a href="{% url 'notifications' %}"><i class="fas fa-bell"></i> Notifications</a></li>
+                <li><a href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div id="notification-area"></div>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 DropLock. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#">Contact Us</a>
+            </div>
+        </div>
+    </footer>
+    
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>

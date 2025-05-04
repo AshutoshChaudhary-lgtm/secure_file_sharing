@@ -1,0 +1,278 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications - SecureShare{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-section">
+        <h1><i class="fas fa-bell"></i> Notifications</h1>
+        <p>Stay updated with activity on your files and sharing requests.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2>Recent Notifications</h2>
+            <button id="mark-all-read" class="btn btn-secondary btn-sm">
+                <i class="fas fa-check-double"></i> Mark All as Read
+            </button>
+        </div>
+
+        <div id="notification-container">
+            <div id="notification-list" class="notification-list">
+                <!-- Sample notification - will be replaced by real notifications -->
+                <div class="notification-item">
+                    <div class="notification-icon file-shared">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="notification-content">
+                        <div class="notification-title">Welcome to Notifications</div>
+                        <div class="notification-message">Your notifications will appear here in real-time.</div>
+                        <div class="notification-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const notificationList = document.getElementById('notification-list');
+        const markAllReadBtn = document.getElementById('mark-all-read');
+        
+        // WebSocket setup for real-time notifications
+        const socket = new WebSocket('ws://' + window.location.host + '/ws/notifications/');
+        
+        socket.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            addNotification(data.notification);
+        };
+        
+        socket.onclose = function(event) {
+            console.error('Notification socket closed unexpectedly');
+        };
+        
+        // Function to add a new notification to the list
+        function addNotification(notification) {
+            // Create notification item
+            const notificationItem = document.createElement('div');
+            notificationItem.className = 'notification-item new';
+            
+            // Determine icon based on notification type
+            let iconClass = 'fas fa-info-circle';
+            let typeClass = '';
+            
+            if (notification.type === 'file_shared') {
+                iconClass = 'fas fa-share-alt';
+                typeClass = 'file-shared';
+            } else if (notification.type === 'comment_added') {
+                iconClass = 'fas fa-comment';
+                typeClass = 'comment-added';
+            } else if (notification.type === 'file_deleted') {
+                iconClass = 'fas fa-trash';
+                typeClass = 'error';
+            }
+            
+            // Format timestamp
+            const timestamp = notification.timestamp ? new Date(notification.timestamp) : new Date();
+            const timeAgo = formatTimeAgo(timestamp);
+            
+            // Set notification content
+            notificationItem.innerHTML = `
+                <div class="notification-icon ${typeClass}">
+                    <i class="${iconClass}"></i>
+                </div>
+                <div class="notification-content">
+                    <div class="notification-title">${notification.title || 'Notification'}</div>
+                    <div class="notification-message">${notification.message}</div>
+                    <div class="notification-time">${timeAgo}</div>
+                </div>
+                <div class="notification-actions">
+                    <button class="mark-read" title="Mark as read">
+                        <i class="fas fa-check"></i>
+                    </button>
+                </div>
+            `;
+            
+            // Add to the notification list (at the top)
+            notificationList.prepend(notificationItem);
+            
+            // Fade in animation
+            setTimeout(() => {
+                notificationItem.classList.remove('new');
+            }, 10);
+            
+            // Add event listener to mark as read button
+            const markReadBtn = notificationItem.querySelector('.mark-read');
+            markReadBtn.addEventListener('click', function() {
+                notificationItem.classList.add('read');
+                setTimeout(() => {
+                    notificationItem.remove();
+                }, 500);
+            });
+        }
+        
+        // Mark all as read button
+        markAllReadBtn.addEventListener('click', function() {
+            const notifications = document.querySelectorAll('.notification-item');
+            notifications.forEach(notification => {
+                notification.classList.add('read');
+                setTimeout(() => {
+                    notification.remove();
+                }, 500);
+            });
+        });
+        
+        // Utility function to format time ago
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            
+            let interval = Math.floor(seconds / 31536000);
+            if (interval > 1) return interval + ' years ago';
+            if (interval === 1) return 'a year ago';
+            
+            interval = Math.floor(seconds / 2592000);
+            if (interval > 1) return interval + ' months ago';
+            if (interval === 1) return 'a month ago';
+            
+            interval = Math.floor(seconds / 86400);
+            if (interval > 1) return interval + ' days ago';
+            if (interval === 1) return 'a day ago';
+            
+            interval = Math.floor(seconds / 3600);
+            if (interval > 1) return interval + ' hours ago';
+            if (interval === 1) return 'an hour ago';
+            
+            interval = Math.floor(seconds / 60);
+            if (interval > 1) return interval + ' minutes ago';
+            if (interval === 1) return 'a minute ago';
+            
+            if (seconds < 10) return 'just now';
+            
+            return Math.floor(seconds) + ' seconds ago';
+        }
+        
+        // Fetch existing notifications on page load
+        // This would normally be an API call to get notifications
+        // For now, we'll add some sample notifications
+        setTimeout(() => {
+            addNotification({
+                type: 'file_shared',
+                title: 'File Shared',
+                message: 'John shared "Project Proposal.pdf" with you',
+                timestamp: new Date(Date.now() - 1000 * 60 * 5) // 5 minutes ago
+            });
+            
+            addNotification({
+                type: 'comment_added',
+                title: 'New Comment',
+                message: 'Sarah commented on "Quarterly Report.xlsx"',
+                timestamp: new Date(Date.now() - 1000 * 60 * 60) // 1 hour ago
+            });
+        }, 500);
+    });
+</script>
+
+<style>
+/* Additional styles for the notifications page */
+.notification-list {
+    max-height: 500px;
+    overflow-y: auto;
+    padding: 0.5rem;
+}
+
+.notification-item {
+    display: flex;
+    padding: 1rem;
+    border-radius: var(--radius);
+    margin-bottom: 0.75rem;
+    background-color: var(--white);
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-item.new {
+    opacity: 0;
+    transform: translateX(20px);
+}
+
+.notification-item.read {
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+.notification-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 1rem;
+    background-color: var(--light);
+    color: var(--dark);
+}
+
+.notification-icon.file-shared {
+    background-color: rgba(74, 222, 128, 0.2);
+    color: var(--success);
+}
+
+.notification-icon.comment-added {
+    background-color: rgba(76, 201, 240, 0.2);
+    color: var(--accent);
+}
+
+.notification-icon.error {
+    background-color: rgba(248, 113, 113, 0.2);
+    color: var(--danger);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.notification-message {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
+.notification-time {
+    font-size: 0.75rem;
+    color: var(--gray);
+    margin-top: 0.25rem;
+}
+
+.notification-actions {
+    display: flex;
+    align-items: flex-start;
+}
+
+.notification-actions button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray);
+    transition: color 0.2s;
+    padding: 0.25rem;
+}
+
+.notification-actions button:hover {
+    color: var(--dark);
+}
+
+#mark-all-read {
+    align-self: center;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Friends - SecureShare{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="dashboard-section">
+        <h1><i class="fas fa-users"></i> Friend Management</h1>
+        <p>Connect with other users to share files securely.</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-user-plus"></i> Send Friend Request</h2>
+        </div>
+        <form id="add-friend-form" class="form-inline">
+            {% csrf_token %}
+            <div class="form-group" style="display: flex; gap: 10px; margin-top: 15px;">
+                <input type="text" name="username" placeholder="Enter friend's username (not email)" required class="form-control" style="flex: 1;" pattern="^[a-zA-Z0-9_-]+$" title="Username can only contain letters, numbers, underscores and hyphens">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-paper-plane"></i> Send Request
+                </button>
+            </div>
+            <small class="form-text text-muted">Enter a username, not an email address (e.g., "john_doe" not "john@example.com")</small>
+        </form>
+        <div id="friend-result" class="mt-3"></div>
+    </div>
+
+    {% if incoming_requests %}
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-inbox"></i> Friend Requests ({{ incoming_requests|length }})</h2>
+        </div>
+        
+        <ul class="friends-list">
+            {% for request in incoming_requests %}
+                <li class="friend-item">
+                    <div>
+                        <i class="fas fa-user"></i>
+                        <span>{{ request.username }}</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-success btn-sm accept-request" data-id="{{ request.id }}">
+                            <i class="fas fa-check"></i> Accept
+                        </button>
+                        <button class="btn btn-danger btn-sm reject-request" data-id="{{ request.id }}">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    {% if outgoing_requests %}
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-paper-plane"></i> Sent Requests ({{ outgoing_requests|length }})</h2>
+        </div>
+        
+        <ul class="friends-list">
+            {% for request in outgoing_requests %}
+                <li class="friend-item">
+                    <div>
+                        <i class="fas fa-user"></i>
+                        <span>{{ request.username }}</span>
+                        <span class="text-muted">(pending)</span>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-user-friends"></i> Your Friends</h2>
+        </div>
+        
+        <ul class="friends-list">
+            {% for friend in friends %}
+                <li class="friend-item">
+                    <div>
+                        <i class="fas fa-user"></i>
+                        <span>{{ friend.username }}</span>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary btn-sm share-files" data-id="{{ friend.id }}">
+                            <i class="fas fa-share-alt"></i> Share Files
+                        </button>
+                        <button class="btn btn-danger btn-sm remove-friend" data-id="{{ friend.id }}">
+                            <i class="fas fa-user-minus"></i> Remove
+                        </button>
+                    </div>
+                </li>
+            {% empty %}
+                <li class="friend-item" style="justify-content: center;">
+                    <i class="fas fa-info-circle"></i> No friends added yet.
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Share With Friend Modal -->
+<div id="shareWithFriendModal" class="modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+    <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 50%; border-radius: var(--radius); box-shadow: var(--shadow-lg);">
+        <span class="close" style="color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;">&times;</span>
+        <h2>Share Files with <span id="friendShareName"></span></h2>
+        
+        <div id="noFilesMessage" style="display: none;">
+            <p>You don't have any files to share. Upload files first!</p>
+            <a href="{% url 'upload_file' %}" class="btn btn-primary">Upload Files</a>
+        </div>
+        
+        <form id="shareFileWithFriendForm" style="display: block;">
+            {% csrf_token %}
+            <input type="hidden" id="friendShareId" name="friend_id">
+            <div class="form-group">
+                <label for="fileToShare">Select a file to share:</label>
+                <select id="fileToShare" name="file_id" class="form-control" required>
+                    <option value="">-- Select a file --</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin-top: 15px;">
+                <button type="submit" class="btn btn-primary">Share File</button>
+            </div>
+        </form>
+        <div id="shareWithFriendResult" style="margin-top: 15px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add friend form submission
+        const addFriendForm = document.getElementById('add-friend-form');
+        const friendResult = document.getElementById('friend-result');
+        
+        addFriendForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = this.username.value;
+            
+            // Display loading indicator
+            friendResult.innerHTML = '<div class="loader"></div>';
+            
+            // Send Ajax request to add friend
+            fetch('{% url "friends" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({
+                    'add_friend': 'true',
+                    'username': username
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    friendResult.innerHTML = `
+                        <div class="notification file-shared">
+                            <div class="notification-title">Success</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                    // Reload the page after a short delay to show the new friend request
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    friendResult.innerHTML = `
+                        <div class="notification error">
+                            <div class="notification-title">Error</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                friendResult.innerHTML = `
+                    <div class="notification error">
+                        <div class="notification-title">Error</div>
+                        <div class="notification-message">An error occurred while processing your request.</div>
+                    </div>
+                `;
+                console.error('Error:', error);
+            });
+        });
+        
+        // Accept friend request buttons
+        const acceptRequestButtons = document.querySelectorAll('.accept-request');
+        acceptRequestButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const friendId = this.getAttribute('data-id');
+                const friendItem = this.closest('.friend-item');
+                
+                fetch('{% url "friends" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: new URLSearchParams({
+                        'accept_request': 'true',
+                        'friend_id': friendId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Show success notification
+                        friendResult.innerHTML = `
+                            <div class="notification file-shared">
+                                <div class="notification-title">Success</div>
+                                <div class="notification-message">${data.message}</div>
+                            </div>
+                        `;
+                        // Remove the request item and reload after a delay
+                        friendItem.remove();
+                        setTimeout(() => window.location.reload(), 2000);
+                    } else {
+                        friendResult.innerHTML = `
+                            <div class="notification error">
+                                <div class="notification-title">Error</div>
+                                <div class="notification-message">${data.message}</div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+        
+        // Reject friend request buttons
+        const rejectRequestButtons = document.querySelectorAll('.reject-request');
+        rejectRequestButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const friendId = this.getAttribute('data-id');
+                const friendItem = this.closest('.friend-item');
+                
+                fetch('{% url "friends" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: new URLSearchParams({
+                        'reject_request': 'true',
+                        'friend_id': friendId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Show success notification
+                        friendResult.innerHTML = `
+                            <div class="notification file-shared">
+                                <div class="notification-title">Success</div>
+                                <div class="notification-message">${data.message}</div>
+                            </div>
+                        `;
+                        // Remove the request item
+                        friendItem.remove();
+                    } else {
+                        friendResult.innerHTML = `
+                            <div class="notification error">
+                                <div class="notification-title">Error</div>
+                                <div class="notification-message">${data.message}</div>
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+            });
+        });
+        
+        // Remove friend buttons
+        const removeFriendButtons = document.querySelectorAll('.remove-friend');
+        removeFriendButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const friendId = this.getAttribute('data-id');
+                if (confirm('Are you sure you want to remove this friend?')) {
+                    fetch('{% url "friends" %}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        },
+                        body: new URLSearchParams({
+                            'remove_friend': 'true',
+                            'friend_id': friendId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Remove the friend item from the UI
+                            this.closest('.friend-item').remove();
+                            // Show success notification
+                            const friendResult = document.getElementById('friend-result');
+                            friendResult.innerHTML = `
+                                <div class="notification file-shared">
+                                    <div class="notification-title">Success</div>
+                                    <div class="notification-message">${data.message}</div>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+                }
+            });
+        });
+        
+        // Share files buttons
+        const shareFilesButtons = document.querySelectorAll('.share-files');
+        shareFilesButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const friendId = this.getAttribute('data-id');
+                const friendName = this.closest('.friend-item').querySelector('span').textContent;
+                
+                // Open share with friend modal
+                document.getElementById('friendShareName').textContent = friendName;
+                document.getElementById('friendShareId').value = friendId;
+                document.getElementById('shareWithFriendModal').style.display = 'block';
+                
+                // Fetch user's files and populate the select dropdown
+                fetch('{% url "index" %}', {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.owned_files && data.owned_files.length > 0) {
+                        const fileSelect = document.getElementById('fileToShare');
+                        fileSelect.innerHTML = ''; // Clear existing options
+                        
+                        // Add a default empty option
+                        const defaultOption = document.createElement('option');
+                        defaultOption.value = '';
+                        defaultOption.textContent = '-- Select a file --';
+                        fileSelect.appendChild(defaultOption);
+                        
+                        data.owned_files.forEach(file => {
+                            const option = document.createElement('option');
+                            option.value = file.file_id;
+                            option.textContent = file.file_name;
+                            fileSelect.appendChild(option);
+                        });
+                        
+                        document.getElementById('noFilesMessage').style.display = 'none';
+                        document.getElementById('shareFileWithFriendForm').style.display = 'block';
+                    } else {
+                        document.getElementById('noFilesMessage').style.display = 'block';
+                        document.getElementById('shareFileWithFriendForm').style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching files:', error);
+                    document.getElementById('noFilesMessage').textContent = 'Error loading your files. Please try again.';
+                    document.getElementById('noFilesMessage').style.display = 'block';
+                    document.getElementById('shareFileWithFriendForm').style.display = 'none';
+                });
+            });
+        });
+        
+        // Close share with friend modal
+        document.querySelector('#shareWithFriendModal .close').addEventListener('click', function() {
+            document.getElementById('shareWithFriendModal').style.display = 'none';
+        });
+        
+        window.addEventListener('click', function(event) {
+            if (event.target === document.getElementById('shareWithFriendModal')) {
+                document.getElementById('shareWithFriendModal').style.display = 'none';
+            }
+        });
+        
+        // Share file with friend form submission
+        document.getElementById('shareFileWithFriendForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const fileId = document.getElementById('fileToShare').value;
+            const friendId = document.getElementById('friendShareId').value;
+            
+            // Display loading indicator
+            const shareResult = document.getElementById('shareWithFriendResult');
+            shareResult.innerHTML = '<div class="loader"></div>';
+            
+            // Send Ajax request to share file
+            fetch('{% url "share_file" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: new URLSearchParams({
+                    'file_id': fileId,
+                    'friend_id': friendId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    shareResult.innerHTML = `
+                        <div class="notification file-shared">
+                            <div class="notification-title">Success</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                } else {
+                    shareResult.innerHTML = `
+                        <div class="notification error">
+                            <div class="notification-title">Error</div>
+                            <div class="notification-message">${data.message}</div>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                shareResult.innerHTML = `
+                    <div class="notification error">
+                        <div class="notification-title">Error</div>
+                        <div class="notification-message">An error occurred while processing your request.</div>
+                    </div>
+                `;
+                console.error('Error:', error);
+            });
+        });
+    });
+</script>
+{% endblock %}
