@@ -1,0 +1,152 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media
+staticfiles/
+*.mo
+*.pot
+
+# Firebase credentials
+firebase-credentials.json
+*firebase*credentials*.json
+*google-services.json
+
+# Security & Environment
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+key.key
+*.pem
+*.key
+
+# If you're using pipenv
+Pipfile.lock
+
+# Virtual Environment
+venv/
+ENV/
+env/
+venv311/
+*venv*/
+
+# IDE specific files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# React / Node.js (for temp_file_flow)
+temp_file_flow/node_modules/
+temp_file_flow/build/
+temp_file_flow/.next/
+temp_file_flow/.npm
+temp_file_flow/.yarn
+temp_file_flow/.env
+temp_file_flow/.env.local
+temp_file_flow/.env.development.local
+temp_file_flow/.env.test.local
+temp_file_flow/.env.production.local
+temp_file_flow/npm-debug.log*
+temp_file_flow/yarn-debug.log*
+temp_file_flow/yarn-error.log*
+
+# Media and uploads - When deployed, these should be stored elsewhere
+media/uploads/*
+!media/uploads/.gitkeep
+
+# Coverage reports
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Additional patterns for Django projects
+*.sqlite
+*.pyc
+*.pyo
+__pycache__/
+*.py~
+*$py.class
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Backup files
+*.bak
+*.tmp
+
+# Migration files (consider if you want to exclude these)
+# */migrations/*.py
+# !*/migrations/__init__.py
+
+# Output of test runs
+test-reports/
+
+# Local development settings that should not be in version control
+local_*.py
+dev_*.py
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.venv
+env.bak/
+venv.bak/
+
+# Windows specific
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Python debugging tools
+.hypothesis/
+.pytest_cache/
+pytest.ini
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Audio/video files from testing (if any)
+*.mp3
+*.mp4
+*.avi
+*.mov
