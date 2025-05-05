@@ -8,7 +8,7 @@ const Login = () => {
   const { isAuthenticated } = useAuth();
   
   useEffect(() => {
-    document.title = "Login - FileFlow";
+    document.title = "Login - DropLock";
   }, []);
   
   // Redirect if already authenticated
