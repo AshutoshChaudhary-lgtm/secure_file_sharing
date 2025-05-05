@@ -1,7 +1,7 @@
 /* Modern UI for Secure File Sharing */
 :root {
-  --primary: #5e35b1; /* Deep purple as primary */
-  --primary-dark: #4527a0;
+  --primary: rgb(138, 183, 226); /* Deep purple as primary */
+  --primary-dark: rgb(138, 183, 226);
   --secondary: #00c853; /* Vibrant green */
   --accent: #ffab00; /* Amber accent */
   --danger: #d50000; /* Brighter red */
